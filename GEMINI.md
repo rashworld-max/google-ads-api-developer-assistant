@@ -33,7 +33,7 @@ This document outlines mandatory operational guidelines, constraints, and best p
 
 #### 1.2. API Versioning
 
-ALWAYS dynamically determine the latest Google Ads API version by performing a web search at the start of any task involving API versioning. Use this latest version unless explicitly specified otherwise by the user. Explicitly state the API version being used in generated code or when discussing API interactions.
+ALWAYS dynamically determine the latest Google Ads API version by performing a web search at the start of any task involving API versioning. Use this latest version unless explicitly specified otherwise by the user. Explicitly state the API version being used in generated code or when discussing API interactions. All generated Python code and GAQL queries MUST import and utilize this determined latest version (e.g., `google.ads.googleads.vXX`).
 
 ---
 
