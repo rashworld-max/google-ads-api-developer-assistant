@@ -1,6 +1,6 @@
 # README: Google Ads API Developer Assistant (Gemini CLI Extension)
 
-**TL;DR:** This extension for the Gemini CLI lets you interact with the Google Ads API using natural language. Ask questions, generate GAQL and Python code, and execute API calls directly in your terminal.
+**TL;DR:** This extension for the Gemini CLI lets you interact with the Google Ads API using natural language. Ask questions, generate GAQL and Python code, and execute API calls that read directly in your terminal.
 
 ## Overview
 
@@ -48,7 +48,7 @@ This extension leverages `gemini-cli`'s ability to use `GEMINI.md` files and the
 
 3.  **Configure Credentials:** Make sure your [google-ads.yaml](https://github.com/googleads/google-ads-python/blob/main/google-ads.yaml) file with API credentials is in your `$HOME` directory.
 
-4.  **Install This Extension:** `gemini install https://github.com/googleads/google-ads-api-developer-assistant`
+4.  **Clone the Extension:** `git clone https://github.com/googleads/google-ads-api-developer-assistant`. This becomes your project directory. You need to be in this directory when you run gemini-cli.
 
 5.  **Set Context in Gemini:** The `gemini` command must be run from the root of the `google-ads-api-developer-assistant` project directory. Configure the context paths in `.gemini/settings.json`:
     *   Edit `/path/to/your/google-ads-api-developer-assistant/.gemini/settings.json`.
