@@ -47,7 +47,7 @@ This extension leverages `gemini-cli`'s ability to use `GEMINI.md` files and the
 2.  **Clone the Extension:** `git clone https://github.com/googleads/google-ads-api-developer-assistant`. This becomes your project directory. You need to be in this directory when you run gemini-cli.
 
 3. **Run setup.sh**
-    * Ensure that [ja](https://github.com/jqlang/jq?tab=readme-ov-file#installation) is installed. This is a json processor that allows us to write a valid settings.json.
+    * Ensure that [jq](https://github.com/jqlang/jq?tab=readme-ov-file#installation) is installed. This is a json processor that allows us to write a valid settings.json.
     * cd to <path>/google-ads-api-developer-extension
     * run ./setup.sh <full path to where you want the python library installed>
 
