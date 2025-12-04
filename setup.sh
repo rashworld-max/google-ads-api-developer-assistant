@@ -149,6 +149,11 @@ if ! mv "${TMP_SETTINGS_FILE}" "${SETTINGS_FILE}"; then
   err "ERROR: Failed to move temporary file to ${SETTINGS_FILE}"
   exit 1
 fi
+
+# Register the extension with the gemini extensions manifest
+echo "Registering with the gemini extensions manifest"
+gemini extensions install "${PROJECT_DIR_ABS}"
+
 trap - EXIT # Clear the trap as the file has been moved.
 
 echo "Successfully updated ${SETTINGS_FILE}"
