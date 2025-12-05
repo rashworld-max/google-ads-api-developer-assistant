@@ -32,16 +32,16 @@ This document outlines mandatory operational guidelines, constraints, and best p
 *   Do not execute API calls that modify data (e.g., create, update, delete operations); ONLY allow read-only API calls (e.g., search, get).
 *   Do not execute API calls that modify data (e.g., create, update, delete operations); ONLY allow read-only API calls (e.g., search, get).
 
-#### 1.2. API Versioning
+#### 1.2. API Versioning and Pre-Task Validation
 
-**MANDATORY FIRST STEP:** At the beginning of any task that involves the Google Ads API, you **MUST** perform a `google_web_search` to determine the latest stable version of the Google Ads API. When you obtains the version show it to the user and ask if this is correct.
+**ABSOLUTE MANDATORY FIRST STEP:** Before initiating *any* task, query, or code generation related to the Google Ads API, you **MUST** validate the API version. This is a non-negotiable protocol.
 
-*   **Search Query:** Use a query like "latest google ads api version".
-*   **Verification:** The search result should point to the official Google Ads API documentation on `developers.google.com`.
-*   **Usage:** This version **MUST** be used for all subsequent API calls, code generation, and documentation references for the remainder of the task. For example, all Python imports and GAQL queries must use this determined version (e.g., `google.ads.googleads.vXX`).
-*   **State the version:** You should explicitly state the API version you are using to the user.
+1.  **EXECUTE SEARCH:** Use the `google_web_search` tool with the query: `latest stable google ads api version`.
+2.  **VERIFY SOURCE:** Ensure the result is from the official Google Ads API documentation (`developers.google.com`).
+3.  **CONFIRM WITH USER:** State the version you have found (e.g., "The latest stable version of the Google Ads API is vXX.") and ask the user for confirmation: "Is it OK to proceed using this version?".
+4.  **AWAIT APPROVAL:** **DO NOT** proceed with any other tools or actions until the user confirms the version is correct.
 
-This is a strict operational requirement. Failure to adhere to this rule will result in incorrect and outdated responses.
+**FAILURE TO FOLLOW THIS PROTOCOL IS A CRITICAL ERROR.** All subsequent API calls, code generation, and GAQL queries **MUST** use the user-confirmed version number (e.g., `google.ads.googleads.vXX`).
 
 ---
 
@@ -70,16 +70,16 @@ For consistent execution and dependency management:
 
 ### 3. API INTERACTION & WORKFLOWS
 
-#### 3.1. API Versioning
+#### 3.1. API Versioning and Pre-Task Validation
 
-**MANDATORY FIRST STEP:** At the beginning of any task that involves the Google Ads API, you **MUST** perform a `google_web_search` to determine the latest stable version of the Google Ads API.
+**ABSOLUTE MANDATORY FIRST STEP:** Before initiating *any* task, query, or code generation related to the Google Ads API, you **MUST** validate the API version. This is a non-negotiable protocol.
 
-*   **Search Query:** Use a query like "latest google ads api version".
-*   **Verification:** The search result should point to the official Google Ads API documentation on `developers.google.com`.
-*   **Usage:** This version **MUST** be used for all subsequent API calls, code generation, and documentation references for the remainder of the task. For example, all Python imports and GAQL queries must use this determined version (e.g., `google.ads.googleads.vXX`).
-*   **State the version:** You should explicitly state the API version you are using to the user.
+1.  **EXECUTE SEARCH:** Use the `google_web_search` tool with the query: `latest stable google ads api version`.
+2.  **VERIFY SOURCE:** Ensure the result is from the official Google Ads API documentation (`developers.google.com`).
+3.  **CONFIRM WITH USER:** State the version you have found (e.g., "The latest stable version of the Google Ads API is vXX.") and ask the user for confirmation: "Is it OK to proceed using this version?".
+4.  **AWAIT APPROVAL:** **DO NOT** proceed with any other tools or actions until the user confirms the version is correct.
 
-This is a strict operational requirement. Failure to adhere to this rule will result in incorrect and outdated responses.
+**FAILURE TO FOLLOW THIS PROTOCOL IS A CRITICAL ERROR.** All subsequent API calls, code generation, and GAQL queries **MUST** use the user-confirmed version number (e.g., `google.ads.googleads.vXX`).
 
 *   **Search Operations:** Use `SearchGoogleAdsStream` objects (e.g., `SearchGoogleAdsStreamRequest`, NOT `SearchGoogleAdsRequest`).
 *   **Change History:** Use `change_status` resources.
