@@ -110,6 +110,14 @@ b.  **Set Context in Gemini:** The `gemini` command must be run from the root of
 *   `saved_csv/`: Stores CSV files exported from API results.
 *   `customer_id.txt`: (Optional) Stores the default customer ID.
 
+## Mutate Operations
+
+*   Assistant's Job: To help you by writing the code that would modify things (e.g., create or update a campaign, add a user).
+
+*   Your Job: To review that code for accuracy, decide if you want to run it, and then execute it yourself outside of the Assistant. The Assistant won't run it for you.
+
+*   See the TOOLING & EXECUTION PROTOCOL section in GEMINI.md for details.
+
 ## Known Quirks
 
 *   The underlying model may have been trained on an older API version. It
