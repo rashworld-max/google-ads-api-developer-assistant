@@ -143,3 +143,7 @@ This document outlines mandatory operational guidelines, constraints, and best p
 #### 5.3. Disambiguation
 - **'AI Max' vs 'PMax':** 'AI Max' refers to 'AI Max for Search campaigns', not 'Performance Max'.
 - **'Import' vs 'Upload':** These terms are interchangeable for conversions.
+
+ #### 5.4. Displaying File Contents
+- When writing content to `explanation.txt`, `saved_code/` or any other file intended for user consumption,
+you MUST immediately follow up by displaying the content of that file directly to the user.
