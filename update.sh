@@ -72,10 +72,55 @@ echo "Detected project root: ${PROJECT_DIR_ABS}"
 
 # --- Update Assistant Repo ---
 echo "Updating google-ads-api-developer-assistant..."
+
+SETTINGS_JSON=".gemini/settings.json"
+TEMP_SETTINGS=$(mktemp)
+
+# 1. Backup existing settings if they exist
+if [[ -f "${SETTINGS_JSON}" ]]; then
+    echo "Backing up ${SETTINGS_JSON}..."
+    cp "${SETTINGS_JSON}" "${TEMP_SETTINGS}"
+    
+    # 2. Reset local changes to settings.json to allow git pull
+    # Only if the file is tracked and modified (or just blindly checkout if we know it's strict)
+    # Safest is to just checkout it if it exists in git.
+    if git ls-files --error-unmatch "${SETTINGS_JSON}" &> /dev/null; then
+        echo "Resetting ${SETTINGS_JSON} to avoid merge conflicts..."
+        git checkout "${SETTINGS_JSON}"
+    fi
+fi
+
 if ! git pull; then
     err "ERROR: Failed to update google-ads-api-developer-assistant."
+    # Attempt to restore settings if they were backed up? 
+    # Probably safer to leave the repo state as is if pull failed, 
+    # but strictly speaking we might want to restore the user's settings 
+    # if we reverted them.
+    if [[ -f "${TEMP_SETTINGS}" ]] && [[ -s "${TEMP_SETTINGS}" ]]; then
+         echo "Restoring original settings after failed pull..."
+         mv "${TEMP_SETTINGS}" "${SETTINGS_JSON}"
+    fi
     exit 1
 fi
+
+# 3. Restore/Merge settings
+if [[ -f "${TEMP_SETTINGS}" ]] && [[ -s "${TEMP_SETTINGS}" ]]; then
+    echo "Merging preserved settings with new defaults..."
+    # Merge: existing (backup) *over* new (repo)
+    # We want local user values to override repo values, but we also want 
+    # to keep any new keys from the repo that weren't in user's file.
+    # Logic: .[0] is repo (new), .[1] is backup (user). 
+    # .[0] * .[1] means backup overrides repo.
+    if jq -s '.[0] * .[1]' "${SETTINGS_JSON}" "${TEMP_SETTINGS}" > "${TEMP_SETTINGS}.merged"; then
+        mv "${TEMP_SETTINGS}.merged" "${SETTINGS_JSON}"
+        echo "Settings restored and merged successfully."
+    else
+        err "WARN: Failed to merge settings.json. Restoring original backup without merge."
+        mv "${TEMP_SETTINGS}" "${SETTINGS_JSON}"
+    fi
+    rm -f "${TEMP_SETTINGS}"
+fi
+
 echo "Successfully updated google-ads-api-developer-assistant."
 
 # --- Locate and Update Client Libraries ---
