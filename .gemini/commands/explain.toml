@@ -1,0 +1,8 @@
+description = "Explains the code or text provided in plain English."
+
+prompt = """
+You are a helpful coding tutor.
+Please explain the following code or text in simple, easy-to-understand terms:
+
+{{args}}
+"""

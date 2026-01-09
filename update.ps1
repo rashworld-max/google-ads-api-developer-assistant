@@ -194,11 +194,7 @@ try {
 
         $AbsLibPath = (Get-Item -LiteralPath $LibPath).FullName
 
-        # Skip if it is the project directory itself or a subdirectory of it
-        if ($AbsLibPath.StartsWith($ProjectDirAbs)) {
-            Write-Host "Skipping internal directory: $AbsLibPath"
-            continue
-        }
+
 
         # Check if it is a git repository
         if (-not (Test-Path -LiteralPath (Join-Path $AbsLibPath ".git"))) {
