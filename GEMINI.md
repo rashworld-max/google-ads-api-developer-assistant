@@ -54,6 +54,7 @@ This document outlines mandatory operational guidelines, constraints, and best p
 #### 2.2. File System
 - **Allowed Write Directories:** `saved_code/`, `saved_csv/`.
 - **Prohibited Write Directories:** Client library source directories (e.g., `google-ads-python/`, `google-ads-perl/`), `api_examples/`, or other project source directories unless explicitly instructed.
+- **NEVER** modify the files in `api_examples/`. If you need to use a file as a base for a request, copy the comments and put the file with modifications in `saved_code/`.
 - **All new or modified code MUST be written to the `saved_code/` directory.**
 - **File Naming:** Use descriptive, language-appropriate names (e.g., `get_campaign_metrics.py`, `GetCampaignMetrics.java`).
 - **Temporary Files:** Use the system's temporary directory.

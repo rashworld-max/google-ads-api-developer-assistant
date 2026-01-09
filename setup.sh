@@ -31,8 +31,17 @@ err() {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $*" >&2
 }
 
+# --- Project Directory Resolution ---
+# Determine the root directory of the current git repository.
+if ! PROJECT_DIR_ABS=$(git rev-parse --show-toplevel 2>/dev/null); then
+  err "ERROR: This script must be run from within the google-ads-api-developer-assistant git repository."
+  exit 1
+fi
+readonly PROJECT_DIR_ABS
+echo "Detected project root: ${PROJECT_DIR_ABS}"
+
 # --- Configuration ---
-readonly DEFAULT_PARENT_DIR="${HOME}/gaada"
+readonly DEFAULT_PARENT_DIR="${PROJECT_DIR_ABS}/client_libs"
 readonly ALL_LANGS="python php ruby java dotnet"
 
 # Helper functions for repo info (Replacing associative arrays for Bash 3.2 compatibility)
@@ -161,15 +170,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# --- Project Directory Resolution ---
-# Determine the root directory of the current git repository.
-if ! PROJECT_DIR_ABS=$(git rev-parse --show-toplevel 2>/dev/null); then
-  err "ERROR: This script must be run from within the google-ads-api-developer-assistant git repository."
-  exit 1
-fi
-readonly PROJECT_DIR_ABS
-echo "Detected project root: ${PROJECT_DIR_ABS}"
-
 # --- Language Selection Logic ---
 # If no languages selected, select all
 if [[ "${ANY_SELECTED}" == "false" ]]; then
@@ -219,11 +219,7 @@ for lang in $ALL_LANGS; do
     # Bash 3.2 compatible way to set variable by name
     eval "LIB_PATH_${lang}='${ABS_PATH}'"
     
-    # Validation: check against project dir
-    if [[ "${ABS_PATH}" == "${PROJECT_DIR_ABS}"* ]]; then
-       err "ERROR: ${lang} path (${ABS_PATH}) cannot be a subdirectory of the project directory (${PROJECT_DIR_ABS})"
-       exit 1
-    fi
+
   fi
 done
 
