@@ -191,11 +191,7 @@ for lib_path in "${INCLUDE_DIRS[@]}"; do
          continue
     fi
 
-    # Skip if it is the project directory itself or a subdirectory of it
-    if [[ "${abs_lib_path}" == "${PROJECT_DIR_ABS}"* ]]; then
-        echo "Skipping internal directory: ${abs_lib_path}"
-        continue
-    fi
+
 
     # Check if it is a git repository
     if [[ ! -d "${abs_lib_path}/.git" ]]; then

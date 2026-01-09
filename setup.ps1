@@ -43,8 +43,23 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# --- Project Directory Resolution ---
+# Determine the root directory of the current git repository.
+try {
+    $ProjectDirAbs = git rev-parse --show-toplevel 2>$null
+    if (-not $ProjectDirAbs) { throw "Not in a git repo" }
+    # Normalize path separator
+    $ProjectDirAbs = (Get-Item -LiteralPath $ProjectDirAbs).FullName
+}
+catch {
+    Write-Error "ERROR: This script must be run from within the google-ads-api-developer-assistant git repository."
+    exit 1
+}
+
+Write-Host "Detected project root: $ProjectDirAbs"
+
 # --- Configuration ---
-$DefaultParentDir = Join-Path $HOME "gaada"
+$DefaultParentDir = Join-Path $ProjectDirAbs "client_libs"
 $AllLangs = @("python", "php", "ruby", "java", "dotnet")
 
 # Helper to get repo config
@@ -76,21 +91,6 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-# --- Project Directory Resolution ---
-# Determine the root directory of the current git repository.
-try {
-    $ProjectDirAbs = git rev-parse --show-toplevel 2>$null
-    if (-not $ProjectDirAbs) { throw "Not in a git repo" }
-    # Normalize path separator
-    $ProjectDirAbs = (Get-Item -LiteralPath $ProjectDirAbs).FullName
-}
-catch {
-    Write-Error "ERROR: This script must be run from within the google-ads-api-developer-assistant git repository."
-    exit 1
-}
-
-Write-Host "Detected project root: $ProjectDirAbs"
-
 # --- Path Resolution and Validation ---
 Write-Host "Ensuring default library directory exists: $DefaultParentDir"
 if (-not (Test-Path -LiteralPath $DefaultParentDir)) {
@@ -117,13 +117,6 @@ foreach ($Lang in $AllLangs) {
         $Config = Get-RepoConfig -Lang $Lang
         $RepoPath = Join-Path $DefaultParentDir $Config.Name
         $LibPaths[$Lang] = $RepoPath
-
-        # Validation: check against project dir
-        # Simple string check for subdirectory
-        if ($RepoPath.StartsWith($ProjectDirAbs)) {
-             Write-Error "ERROR: $Lang path ($RepoPath) cannot be a subdirectory of the project directory ($ProjectDirAbs)"
-             exit 1
-        }
     }
 }
 
