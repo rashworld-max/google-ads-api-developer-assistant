@@ -15,5 +15,8 @@
 - Modified logic in setup and update scripts.
 - Added tests for setup and update scripts.
 
-
-
+* 1.3.0
+- Added explain command.
+- Placed client libraries in a sub-directory of the project directory.
+- Updated setup and update scripts.
+- Added constraint to GEMINI.md to never modify files in api_examples.
