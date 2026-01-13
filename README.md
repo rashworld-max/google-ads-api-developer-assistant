@@ -133,6 +133,8 @@ To see the full list, from within the Assistant, `ls -l .gemini/commands`. This
 will provide a list of the .toml files that define the commands. For example, `explain.toml`
 can be executed as `/explain <your request>`.
 
+Or, you can execute  `run python list_commands.py` from within the Assistant to see the full list with descriptions.
+
 ## Directory Structure
 
 *   `google-ads-api-developer-assistant/`: Root directory. **Launch `gemini` from here.**
