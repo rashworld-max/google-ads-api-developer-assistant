@@ -121,12 +121,11 @@ b.  **Set Context in Gemini:** The `gemini` command must be run from the root of
 
 ### Customm Commands
 
-There is a bug in /help. It does not list custom commands under the project directory. You can see the names of the custom commands by running `ls  -l .gemini/commands`. This will list the .toml files that contain the custom commands. You can then use the custom commands by running `/` followed by the name of the custom command. For example, if you see a file named `explain.toml`, you can use the custom command by running `/explain`.
 
 This is a partial list of custom commands:
 
 * `/explain` - Format the response from the model to be more readable.
-* `step_by_step` - Format the response a series of steps. Show the model's thinking process. This is useful for debugging.
+* `step_by_step` - Format the response as series of steps. Show the model's thinking process. This is useful for debugging.
 
 ## Directory Structure
 
