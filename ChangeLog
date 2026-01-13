@@ -1,10 +1,12 @@
-* 1.0.0
-- Release of verion 1.0
+* 1.4.0
+- Modified ChangeLog so changes are listed in reverse chronological order.
+- Added step_by_step custom command.
 
-* 1.1.0
-- Added support for PHP, Ruby, Java, and C#.
-- Find latest verion of the API and prompt user whether to use this version.
-- Modified setup.sh to clone copies of the client libraries.
+* 1.3.0
+- Added explain command.
+- Placed client libraries in a sub-directory of the project directory.
+- Updated setup and update scripts.
+- Added constraint to GEMINI.md to never modify files in api_examples.
 
 * 1.2.0
 - Updated README.md for clarity
@@ -15,8 +17,10 @@
 - Modified logic in setup and update scripts.
 - Added tests for setup and update scripts.
 
-* 1.3.0
-- Added explain command.
-- Placed client libraries in a sub-directory of the project directory.
-- Updated setup and update scripts.
-- Added constraint to GEMINI.md to never modify files in api_examples.
+* 1.1.0
+- Added support for PHP, Ruby, Java, and C#.
+- Find latest verion of the API and prompt user whether to use this version.
+- Modified setup.sh to clone copies of the client libraries.
+
+* 1.0.0
+- Release of verion 1.0
