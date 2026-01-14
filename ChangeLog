@@ -1,3 +1,7 @@
+* 1.4.1
+- Fixed minor bugs in tests for api_examples.
+- Added test api_examples/tests/test_get_conversion_upload_summary.py
+
 * 1.4.0
 - Modified ChangeLog so changes are listed in reverse chronological order.
 - Added step_by_step custom command.
