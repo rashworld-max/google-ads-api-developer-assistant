@@ -17,9 +17,7 @@ import sys
 
 from google.ads.googleads.client import GoogleAdsClient
 from google.ads.googleads.errors import GoogleAdsException
-from google.ads.googleads.v22.enums.asset_field_type_enum.asset_field_type import (
-    AssetFieldTypeEnum,
-)
+from google.ads.googleads.v22.enums import AssetFieldTypeEnum
 
 
 def main(
@@ -54,11 +52,11 @@ def main(
     # removing (e.g., TEXT, IMAGE, VIDEO).
 
     try:
-        field_type_enum = getattr(AssetFieldTypeEnum, field_type.upper())
+        field_type_enum = getattr(AssetFieldTypeEnum.AssetFieldType, field_type.upper())
     except AttributeError:
         print(
             f"Error: Invalid field type '{field_type}'. "
-            f"Please use one of: {[e.name for e in AssetFieldTypeEnum if e.name not in ('UNSPECIFIED', 'UNKNOWN')]}"
+            f"Please use one of: {[e.name for e in AssetFieldTypeEnum.AssetFieldType if e.name not in ('UNSPECIFIED', 'UNKNOWN')]}"
         )
         sys.exit(1)
 

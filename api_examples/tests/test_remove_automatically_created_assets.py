@@ -36,6 +36,11 @@ class TestRemoveAutomaticallyCreatedAssets(unittest.TestCase):
 
         self.mock_client.get_service.side_effect = self._get_mock_service
 
+        self.patcher = unittest.mock.patch(
+            "api_examples.remove_automatically_created_assets.AssetFieldTypeEnum"
+        )
+        self.mock_asset_field_type_enum = self.patcher.start()
+
         class MockAssetFieldType:
             UNSPECIFIED = MagicMock()
             UNSPECIFIED.name = "UNSPECIFIED"
@@ -67,13 +72,8 @@ class TestRemoveAutomaticallyCreatedAssets(unittest.TestCase):
                     ]
                 )
 
-        self.mock_real_asset_field_type = MockAssetFieldType()
+        self.mock_asset_field_type_enum.AssetFieldType = MockAssetFieldType()
 
-        self.mock_client.enums = MagicMock()
-        self.mock_client.enums.AssetFieldTypeEnum = MagicMock()
-        self.mock_client.enums.AssetFieldTypeEnum.AssetFieldType = (
-            self.mock_real_asset_field_type
-        )
 
         self.customer_id = "1234567890"
         self.campaign_id = 12345
@@ -92,6 +92,7 @@ class TestRemoveAutomaticallyCreatedAssets(unittest.TestCase):
 
     def tearDown(self):
         sys.stdout = sys.__stdout__
+        self.patcher.stop()
 
     def test_main_successful_removal(self):
         mock_response = MagicMock()
