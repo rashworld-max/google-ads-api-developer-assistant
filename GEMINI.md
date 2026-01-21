@@ -82,6 +82,20 @@ This document outlines mandatory operational guidelines, constraints, and best p
 - **Date Ranges:** Compute dates dynamically (no constants like `LAST_90_DAYS`).
 - **Conversion Summaries:** Use `daily_summaries` for date-segmented data from `offline_conversion_upload_conversion_action_summary` and `offline_conversion_upload_client_summary`.
 
+#### 3.3.1. Rigorous GAQL Validation
+
+  When validating a GAQL query, you MUST follow this process:
+
+   1. Initial Field Validation: For each field in the query, use GoogleAdsFieldService to verify that it is selectable and filterable.
+
+   2. Contextual Compatibility Check: Do not assume that a filterable field is filterable in all contexts. You MUST verify its compatibility with the resource in the FROM clause. To do this, you MUST:
+       * Query the GoogleAdsFieldService for the main resource in the FROM clause.
+       * Examine the selectable_with attribute of the main resource to find the correct fields for filtering.
+
+   3. Segment Rule: You MUST verify that any segment field used in the WHERE clause is also present in the SELECT clause, unless it is a core date segment (segments.date, segments.week, segments.month, segments.quarter, segments.year).
+
+   4. Prioritize Validator Errors: If the user provides an error message from a GAQL query validator, you MUST treat that error message as the definitive source of truth. You MUST immediately re-evaluate your validation and correct the query based on the error message.
+
 #### 3.4. Code Generation
 - **Language:** Infer the target language from user request, existing files, or project context. Default to Python if ambiguous.
 - **Reference Source:** Refer to official Google Ads API client library examples for the target language.
