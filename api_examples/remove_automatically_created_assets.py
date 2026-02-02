@@ -126,7 +126,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # GoogleAdsClient will read the google-ads.yaml file from the home directory.
-    googleads_client = GoogleAdsClient.load_from_storage(version="v22")
+    googleads_client = GoogleAdsClient.load_from_storage(version="v23")
 
     main(
         googleads_client,
