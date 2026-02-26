@@ -25,20 +25,24 @@
     Include google-ads-dotnet.
 
 .EXAMPLE
-    .\setup.ps1 -Python -Java
-    Installs only Python and Java libraries.
+    .\install.ps1 -Java
+    Installs Java and Python libraries.
 
 .EXAMPLE
-    .\setup.ps1
-    Installs ALL supported libraries.
+    .\install.ps1
+    Installs only the Python library.
+
+.EXAMPLE
+    .\install.ps1 -Java
+    Installs Java and Python libraries.
 #>
 
 param(
-    [switch]$Python,
     [switch]$Php,
     [switch]$Ruby,
     [switch]$Java,
-    [switch]$Dotnet
+    [switch]$Dotnet,
+    [switch]$InstallDeps
 )
 
 $ErrorActionPreference = "Stop"
@@ -75,14 +79,16 @@ function Get-RepoConfig {
 }
 
 # --- Defaults ---
-# If no specific languages selected, select all
-if (-not ($Python -or $Php -or $Ruby -or $Java -or $Dotnet)) {
-    Write-Host "No specific languages selected. Defaulting to ALL languages."
-    $Python = $true
-    $Php = $true
-    $Ruby = $true
-    $Java = $true
-    $Dotnet = $true
+$Python = $true
+$AnySelected = $false
+
+if ($Php -or $Ruby -or $Java -or $Dotnet) {
+    $AnySelected = $true
+}
+
+# If no specific languages selected, default to Python only
+if (-not $AnySelected) {
+    Write-Host "No additional languages selected. Defaulting to Python only."
 }
 
 # --- Dependency Check ---
@@ -170,7 +176,7 @@ if (-not (Test-Path -LiteralPath $SettingsFile)) {
 Write-Host "Updating $SettingsFile with context paths..."
 
 $ContextPathExamples = Join-Path $ProjectDirAbs "api_examples"
-$ContextPathSaved = Join-Path $ProjectDirAbs "saved_code"
+$ContextPathSaved = Join-Path $ProjectDirAbs "saved/code"
 
 try {
     $SettingsJson = Get-Content -LiteralPath $SettingsFile -Raw | ConvertFrom-Json
@@ -202,6 +208,30 @@ try {
     Write-Host "Successfully updated $SettingsFile"
     Write-Host "New contents of context.includeDirectories:"
     Write-Host ($SettingsJson.context.includeDirectories | Out-String)
+
+    Write-Host "Registering Google Ads API Developer Assistant as a Gemini extension..."
+    if (Get-Command gemini -ErrorAction SilentlyContinue) {
+        try {
+            $InstallOutput = "Y" | & gemini extensions install https://github.com/googleads/google-ads-api-developer-assistant.git 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 0) {
+                if ($InstallOutput -match "already installed") {
+                    Write-Host "Extension already installed. Reinstalling..."
+                    gemini extensions uninstall "google-ads-api-developer-assistant" 2>&1 | Out-Null
+                    $InstallOutput = "Y" | & gemini extensions install https://github.com/googleads/google-ads-api-developer-assistant.git 2>&1 | Out-String
+                } else {
+                    Write-Warning $InstallOutput
+                    Write-Warning "Failed to register extension automatically. You may need to run 'gemini extensions install https://github.com/googleads/google-ads-api-developer-assistant.git' manually."
+                }
+            } else {
+                Write-Host $InstallOutput
+            }
+        }
+        catch {
+            Write-Warning "An unexpected error occurred during extension registration: $_"
+        }
+    } else {
+        Write-Warning "'gemini' command not found. Skipping extension registration."
+    }
 }
 catch {
     Write-Error "ERROR: Failed to update settings file: $_"
@@ -210,7 +240,36 @@ catch {
 
 
 
-Write-Host "Setup complete."
+
+if ($Python -and $InstallDeps) {
+    Write-Host "Installing google-ads via pip..."
+    python -m pip install --upgrade google-ads
+}
+
+if ($Php -and $InstallDeps) {
+    Write-Host "Installing google-ads-php dependencies via composer..."
+    $path = $LibPaths["php"]
+    if (Test-Path (Join-Path $path "composer.json")) {
+        Push-Location $path
+        try { composer install } finally { Pop-Location }
+    } else {
+        Write-Warning "composer.json not found in $path"
+    }
+}
+
+if ($Ruby -and $InstallDeps) {
+    Write-Host "Installing google-ads-ruby dependencies via bundle..."
+    $path = $LibPaths["ruby"]
+    if (Test-Path (Join-Path $path "Gemfile")) {
+        Push-Location $path
+        try { bundle install } finally { Pop-Location }
+    } else {
+        Write-Warning "Gemfile not found in $path"
+    }
+}
+
+Write-Host "Installation complete."
 Write-Host ""
 Write-Host "IMPORTANT: You must manually configure a development environment for each language you wish to use."
 Write-Host "           (e.g.,  run 'pip install google-ads' for Python, run 'composer install' for PHP, etc.)"
+Write-Host "           If you used -InstallDeps, you can verify the installation by running 'python -m pip show google-ads' for Python, 'composer show google/ads-api-php-client' for PHP, etc."

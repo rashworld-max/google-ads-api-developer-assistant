@@ -67,12 +67,13 @@ get_repo_name() {
 
 # --- Defaults ---
 # Simple variables to track selection (associative arrays not supported in Bash 3.2)
-INSTALL_PYTHON=false
+INSTALL_PYTHON=true
 INSTALL_PHP=false
 INSTALL_RUBY=false
 INSTALL_JAVA=false
 INSTALL_DOTNET=false
 ANY_SELECTED=false
+INSTALL_DEPS=false
 
 # --- Dependency Check ---
 if ! command -v jq &> /dev/null; then
@@ -114,19 +115,20 @@ usage() {
   echo ""
   echo "  This script initializes the development environment for the Google Ads API Developer Assistant."
   echo "  It clones the selected client libraries into '${DEFAULT_PARENT_DIR}'."
+  echo "  The google-ads-python library is always installed by default."
   echo ""
   echo "  Options:"
-  echo "    -h, --help                 Show this help message and exit"
-  echo "    --python                   Include google-ads-python"
+  echo "    -h, --help                 Show this help message and exit
+    --install-deps             Install dependencies (e.g. pip packages)"
   echo "    --php                      Include google-ads-php"
   echo "    --ruby                     Include google-ads-ruby"
   echo "    --java                     Include google-ads-java"
   echo "    --dotnet                   Include google-ads-dotnet"
   echo ""
-  echo "  If no language flags are provided, ALL supported languages will be installed."
+  echo "  If no language flags are provided, only the Python library will be installed."
   echo ""
   echo "  Example:"
-  echo "    $0 --java --python         (Installs only Java and Python libraries)"
+  echo "    $0 --java                  (Installs Java and Python libraries)"
   echo ""
 }
 
@@ -136,11 +138,6 @@ while [[ $# -gt 0 ]]; do
     -h|--help)
       usage
       exit 0
-      ;;
-    --python)
-      INSTALL_PYTHON=true
-      ANY_SELECTED=true
-      shift
       ;;
     --php)
       INSTALL_PHP=true
@@ -162,6 +159,10 @@ while [[ $# -gt 0 ]]; do
       ANY_SELECTED=true
       shift
       ;;
+    --install-deps)
+      INSTALL_DEPS=true
+      shift
+      ;;
     *)
       err "ERROR: Unknown argument: $1"
       usage
@@ -171,14 +172,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 # --- Language Selection Logic ---
-# If no languages selected, select all
+# Python is always installed. Other languages are only installed if selected.
 if [[ "${ANY_SELECTED}" == "false" ]]; then
-  echo "No specific languages selected. Defaulting to ALL languages."
-  INSTALL_PYTHON=true
-  INSTALL_PHP=true
-  INSTALL_RUBY=true
-  INSTALL_JAVA=true
-  INSTALL_DOTNET=true
+  echo "No additional languages selected. Defaulting to Python only."
 fi
 
 # --- Path Resolution and Validation ---
@@ -270,7 +266,7 @@ fi
 echo "Updating ${SETTINGS_FILE} with context paths..."
 
 readonly CONTEXT_PATH_EXAMPLES="${PROJECT_DIR_ABS}/api_examples"
-readonly CONTEXT_PATH_SAVED="${PROJECT_DIR_ABS}/saved_code"
+readonly CONTEXT_PATH_SAVED="${PROJECT_DIR_ABS}/saved/code"
 
 # Construct jq args
 JQ_ARGS=(
@@ -318,13 +314,59 @@ if ! mv "${TMP_SETTINGS_FILE}" "${SETTINGS_FILE}"; then
   exit 1
 fi
 
+echo "Registering Google Ads API Developer Assistant as a Gemini extension..."
+if command -v gemini &> /dev/null; then
+  # Use yes Y to handle the interactive prompt as --consent is not supported in OSS
+  # Capture output to detect "already installed" state
+  if ! INSTALL_OUTPUT=$(yes Y | gemini extensions install https://github.com/googleads/google-ads-api-developer-assistant.git 2>&1); then
+    if [[ "${INSTALL_OUTPUT}" == *"already installed"* ]]; then
+      echo "Extension already installed. Reinstalling..."
+      gemini extensions uninstall "google-ads-api-developer-assistant" || true
+      yes Y | gemini extensions install https://github.com/googleads/google-ads-api-developer-assistant.git
+    else
+      echo "${INSTALL_OUTPUT}" >&2
+      err "WARN: Failed to register extension automatically. You may need to run 'gemini extensions install https://github.com/googleads/google-ads-api-developer-assistant.git' manually."
+    fi
+  else
+    echo "${INSTALL_OUTPUT}"
+  fi
+else
+  echo "WARN: 'gemini' command not found. Skipping extension registration."
+fi
+
+if is_enabled "python" && [[ "${INSTALL_DEPS}" == "true" ]]; then
+  echo "Installing google-ads via pip..."
+  python -m pip install --upgrade google-ads
+fi
+
+if is_enabled "php" && [[ "${INSTALL_DEPS}" == "true" ]]; then
+  echo "Installing google-ads-php dependencies via composer..."
+  eval "path=\"\$LIB_PATH_php\""
+  if [[ -f "${path}/composer.json" ]]; then
+    (cd "${path}" && composer install)
+  else
+    echo "WARN: composer.json not found in ${path}"
+  fi
+fi
+
+if is_enabled "ruby" && [[ "${INSTALL_DEPS}" == "true" ]]; then
+  echo "Installing google-ads-ruby dependencies via bundle..."
+  eval "path=\"\$LIB_PATH_ruby\""
+  if [[ -f "${path}/Gemfile" ]]; then
+    (cd "${path}" && bundle install)
+  else
+    echo "WARN: Gemfile not found in ${path}"
+  fi
+fi
+
 trap - EXIT # Clear the trap
 
 echo "Successfully updated ${SETTINGS_FILE}"
 echo "New contents of context.includeDirectories:"
 jq '.context.includeDirectories' "${SETTINGS_FILE}"
 
-echo "Setup complete."
+echo "Installation complete."
 echo ""
-echo "IMPORTANT: You must manually configure a development environment for each language you wish to use."
+echo "IMPORTANT: You must configure and verify the development environment for each language you wish to use."
 echo "           (e.g.,  run 'pip install google-ads' for Python, run 'composer install' for PHP, etc.)"
+echo "           If you used --install-deps, you can verify the installation by running 'python -m pip show google-ads' for Python, 'composer show google/ads-api-php-client' for PHP, etc."
