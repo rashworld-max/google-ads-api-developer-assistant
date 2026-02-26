@@ -21,13 +21,16 @@ from google.ads.googleads.client import GoogleAdsClient
 from google.ads.googleads.errors import GoogleAdsException
 
 
-def main(client: GoogleAdsClient, customer_id: str, gclid: str) -> None:
+def main(
+    client: GoogleAdsClient, customer_id: str, gclid: str, conversion_date_time: str
+) -> None:
     """Uploads a click conversion for a given GCLID.
 
     Args:
         client: An initialized GoogleAdsClient instance.
         customer_id: The client customer ID.
         gclid: The GCLID for the ad click.
+        conversion_date_time: The date and time of the conversion.
     """
     conversion_upload_service = client.get_service("ConversionUploadService")
     click_conversion = client.get_type("ClickConversion")
@@ -45,7 +48,7 @@ def main(client: GoogleAdsClient, customer_id: str, gclid: str) -> None:
         sys.exit(1)
 
     click_conversion.conversion_action = conversion_action
-    click_conversion.conversion_date_time = "2024-01-01 12:32:45-08:00"
+    click_conversion.conversion_date_time = conversion_date_time
     click_conversion.conversion_value = 23.41
     click_conversion.currency_code = "USD"
 
@@ -61,10 +64,6 @@ def main(client: GoogleAdsClient, customer_id: str, gclid: str) -> None:
 
 
 if __name__ == "__main__":
-    # GoogleAdsClient will read the google-ads.yaml configuration file in the
-    # home directory if none is specified.
-    googleads_client = GoogleAdsClient.load_from_storage(version="v23")
-
     parser = argparse.ArgumentParser(
         description="Uploads a click conversion for a given GCLID."
     )
@@ -83,9 +82,22 @@ if __name__ == "__main__":
         required=True,
         help="The GCLID for the ad click.",
     )
+    parser.add_argument(
+        "-v", "--api_version", type=str, default="v23", help="The Google Ads API version."
+    )
     args = parser.parse_args()
+
+    # GoogleAdsClient will read the google-ads.yaml configuration file in the
+    # home directory if none is specified.
+    googleads_client = GoogleAdsClient.load_from_storage(version=args.api_version)
+
     try:
-        main(googleads_client, args.customer_id, args.gclid)
+        main(
+            googleads_client,
+            args.customer_id,
+            args.gclid,
+            args.conversion_date_time,
+        )
     except GoogleAdsException as ex:
         print(
             f'Request with ID "{ex.request_id}" failed with status '
