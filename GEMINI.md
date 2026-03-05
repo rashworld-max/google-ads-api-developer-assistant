@@ -24,8 +24,15 @@
 - **NO PERSISTENCE:** Never save the confirmed API version to `save_memory`.
 - **READ-ONLY:** Only execute `search`, `search_stream`, or `get` methods.
 - **SURYGICAL UPDATES:** When modifying files, use the `replace` tool with minimal context to avoid unintended regressions.
+- **PROTOCOL ADHERENCE:** Strictly prohibited from executing un-linted Python code or un-validated GAQL queries.
 
 #### 1.3. Workflow: API Versioning & Pre-Task Validation
+...
+#### 1.4. Technical Gatekeeping (Protocol Enforcement)
+- **NO BYPASS:** Bypassing the GAQL Validation (3.1) or Python Linting (3.2) protocols is a **System Failure**. 
+- **EXPLICIT LOGGING:** Before calling `run_shell_command` for Python or any API search tool, you MUST explicitly state which protocol step you are currently executing (e.g., "Protocol 3.2: Executing Ruff linting on /tmp/script.py").
+- **PRE-FLIGHT GATE:** For every Python script, the `ruff` check is a blocking operation. If `ruff` returns an error, you MUST fix it and re-lint before the script is even considered for the `saved/code/` directory.
+- **GAQL INTEGRITY:** Any GAQL query presented in chat or sent to the API MUST be preceded by a "Validation Block" confirming it has passed the 4-step sequence in Section 3.1.
 1.  **Search (Exact):** `google_web_search` with query `google ads api release notes`.
 2.  **Fetch (Source):** Extract content from `developers.google.com/google-ads/api/docs/release-notes`.
 3.  **Identify:** Find the latest MAJOR stable version (e.g., `v23`).
@@ -56,6 +63,7 @@ If the `web_fetch` tool is unavailable and you cannot complete the standard vali
 #### 2.2. Configuration Protocol
 - **Discovery:** Check `config/` for language-specific files (`google-ads.yaml`, `google_ads_config.rb`, etc.).
 - **Execution:** Always set `GOOGLE_ADS_CONFIGURATION_FILE_PATH` to the absolute path in `config/` when running `python3`.
+- **Anti-Pattern [CRITICAL]:** NEVER point to configuration files inside `client_libs/`. These are unconfigured templates. Using them will trigger a `ValueError` due to placeholders like `INSERT_USE_PROTO_PLUS_FLAG_HERE`.
 - **Generation:** Do NOT include a hardcoded path in `load_from_storage()`. Use environment variables or default search paths.
 
 #### 2.3. File Persistence
