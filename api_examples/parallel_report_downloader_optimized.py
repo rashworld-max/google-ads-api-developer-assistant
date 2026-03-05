@@ -83,7 +83,7 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--login_id")
     parser.add_argument("-w", "--workers", type=int, default=5)
     parser.add_argument(
-        "-v", "--api_version", type=str, default="v23", help="The Google Ads API version."
+        "-v", "--api_version", type=str, required=True, help="The Google Ads API version."
     )
     args = parser.parse_args()
     main(args.customer_ids, args.login_id, args.api_version, args.workers)

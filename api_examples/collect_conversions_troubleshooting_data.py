@@ -112,7 +112,7 @@ def main(client: GoogleAdsClient, customer_id: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--api_version", type=str, default="v23", help="The Google Ads API version.")
+    parser.add_argument("-v", "--api_version", type=str, required=True, help="The Google Ads API version.")
     args = parser.parse_args()
     googleads_client = GoogleAdsClient.load_from_storage(version=args.api_version)
     main(googleads_client, args.customer_id)
