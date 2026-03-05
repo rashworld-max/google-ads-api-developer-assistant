@@ -53,8 +53,8 @@ def main(
         )
         parser.add_argument(
             "--api_version",
-            default="v23",
-            help="API Version (e.g., v23). Defaults to v23.",
+            required=True,
+            help="API Version (e.g., v23).",
         )
         args = parser.parse_args()
 

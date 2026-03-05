@@ -1,3 +1,6 @@
+* 2.1.1
+- api_examples: api version is a required argument with no default value.
+
 * 2.1.0
 - Updated Workflow: API Versioning & Pre-Task Validation
 - Added anti-pattern to Configuration Protocol

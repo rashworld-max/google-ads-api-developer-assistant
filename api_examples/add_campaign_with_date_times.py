@@ -124,10 +124,6 @@ def _handle_google_ads_exception(exception):
 
 
 if __name__ == "__main__":
-    # GoogleAdsClient will read the google-ads.yaml configuration file in the
-    # home directory if none is specified.
-    googleads_client = GoogleAdsClient.load_from_storage(version="v23")
-
     parser = argparse.ArgumentParser(
         description="Creates a campaign with start and end date times."
     )
@@ -139,6 +135,17 @@ if __name__ == "__main__":
         required=True,
         help="The Google Ads customer ID.",
     )
+    parser.add_argument(
+        "-v",
+        "--api_version",
+        type=str,
+        required=True,
+        help="The Google Ads API version.",
+    )
     args = parser.parse_args()
+
+    # GoogleAdsClient will read the google-ads.yaml configuration file in the
+    # home directory if none is specified.
+    googleads_client = GoogleAdsClient.load_from_storage(version=args.api_version)
 
     main(googleads_client, args.customer_id)

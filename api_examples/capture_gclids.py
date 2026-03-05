@@ -83,7 +83,7 @@ if __name__ == "__main__":
         help="The GCLID for the ad click.",
     )
     parser.add_argument(
-        "-v", "--api_version", type=str, default="v23", help="The Google Ads API version."
+        "-v", "--api_version", type=str, required=True, help="The Google Ads API version."
     )
     args = parser.parse_args()
 
