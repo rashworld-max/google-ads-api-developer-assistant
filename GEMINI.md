@@ -1,10 +1,9 @@
 # Google Ads API Developer Assistant Configuration
 
 ## Metadata
-- **Version:** 2.1
+- **Version:** 2.1.1
 - **Status:** Optimized for Machine Comprehension
 - **Runtime:** Python 3.x, Bash
-- **Workspace Root:** `/home/rwh_google_com/sandbox/google-ads-api-developer-assistant`
 
 ---
 
@@ -23,7 +22,8 @@
 - **NO SECRETS:** Never print, log, or save developer tokens, OAuth secrets, or PII.
 - **NO PERSISTENCE:** Never save the confirmed API version to `save_memory`.
 - **READ-ONLY:** Only execute `search`, `search_stream`, or `get` methods.
-- **SURYGICAL UPDATES:** When modifying files, use the `replace` tool with minimal context to avoid unintended regressions.
+- **SURGICAL UPDATES:** When modifying files, use the `replace` tool with minimal context to avoid unintended regressions.
+- **SOURCE OF TRUTH:** Never rely solely on high-level documentation summaries or search snippets for API capabilities. Always use `grep_search` and `read_file` to verify the literal `.proto` definitions or Python client library docstrings before concluding an API feature's behavior or requirements.
 - **PROTOCOL ADHERENCE:** Strictly prohibited from executing un-linted Python code or un-validated GAQL queries.
 
 #### 1.3. Workflow: API Versioning & Pre-Task Validation
@@ -54,17 +54,16 @@ If the `web_fetch` tool is unavailable and you cannot complete the standard vali
 ### 2. File & Data Management [LOGISTICS]
 
 #### 2.1. Project Structure
-- **Root:** `/home/rwh_google_com/sandbox/google-ads-api-developer-assistant`
+- **Root:** Current context directory (`./`)
 - **Config:** `config/` (Target files for CLI execution).
-- **Scripts (Library):** `api_examples/` (READ-ONLY. Never modify).
+- **Scripts (Library):** `api_examples/` (Modifiable by user request).
 - **Output (Code):** `saved/code/` (All generated/modified scripts).
 - **Output (Data):** `saved/csv/`, `saved/data/` (All report outputs).
 
 #### 2.2. Configuration Protocol
 - **Discovery:** Check `config/` for language-specific files (`google-ads.yaml`, `google_ads_config.rb`, etc.).
-- **Execution:** Always set `GOOGLE_ADS_CONFIGURATION_FILE_PATH` to the absolute path in `config/` when running `python3`.
 - **Anti-Pattern [CRITICAL]:** NEVER point to configuration files inside `client_libs/`. These are unconfigured templates. Using them will trigger a `ValueError` due to placeholders like `INSERT_USE_PROTO_PLUS_FLAG_HERE`.
-- **Generation:** Do NOT include a hardcoded path in `load_from_storage()`. Use environment variables or default search paths.
+- **Generation:** Always use `load_from_storage()` to initialize the client. Do NOT use `load_from_env()`. Ensure `GOOGLE_ADS_CONFIGURATION_FILE_PATH` is set in the environment before execution.
 
 #### 2.3. File Persistence
 - **Write:** Use `write_file` for new scripts.
@@ -128,8 +127,15 @@ except GoogleAdsException as ex:
 #### 4.3. Python Object Inspection (CRITICAL)
 NEVER guess the structure of an API object.
 - **Discovery:** Execute a one-liner to print `type()`, `dir()`, and `str()`.
+- **NO DUMMY CREDENTIALS:** When writing quick inline scripts for object inspection, NEVER initialize `GoogleAdsClient` using `load_from_dict` with placeholder credentials (e.g., `{'developer_token': '1'}`). This triggers an immediate OAuth `RefreshError`.
+- **Inspection Initialization:** You MUST initialize the client using `GoogleAdsClient.load_from_storage()` and ensure the environment variables are correctly passed to the shell command (e.g., `GOOGLE_ADS_USE_PROTO_PLUS=True python3 -c "..."`), OR directly import the protobuf types without initializing a client.
 - **Protobuf:** Verify `.pb` existence before using `message.pb.DESCRIPTOR`.
 - **Nested Types:** Use `Class.meta.pb.DESCRIPTOR` for class-level inspection.
+
+#### 4.4. Performance Max URL Expansion
+- **Asset Group URL Filtering:** When asked to filter or restrict URL expansion for specific Asset Groups without using Page Feeds, ALWAYS use the `AssetGroupListingGroupFilter` resource with a `listing_source` of `WEBPAGE`.
+- **Implementation:** Create a subdivision tree containing a `UNIT_INCLUDED` node with a `Webpage` condition using the `url_contains` operator.
+- **Anti-Pattern:** Do not falsely state that "URL contains" rules for Asset Groups are impossible without feeds. Do not exclusively recommend Campaign-level exclusions or separate campaigns when Asset Group-level webpage partitioning is the requested goal.
 
 ---
 
