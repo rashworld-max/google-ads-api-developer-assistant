@@ -28,6 +28,19 @@ def main():
 
     version = get_version(ext_version_script)
 
+    new_command = f'export gaada="{version}"' 
+        
+    # Return the modified command to the CLI
+    response = {
+            "decision": "allow",
+            "tool_input": {
+                "command": new_command
+            }
+        }
+
+    # 5. Output the final JSON to stdout
+    print(json.dumps(response))
+
     output = {"environment": {"gaada": version}}
 
     # Output JSON to stdout so the CLI can consume the exported environment variables
