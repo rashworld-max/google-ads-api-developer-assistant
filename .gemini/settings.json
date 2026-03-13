@@ -28,18 +28,6 @@
         ]
       }
     ],
-    "BeforeTool": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "name": "export_gaada",
-            "type": "command",
-            "command": "python3 .gemini/hooks/export_gaada.py"
-          }
-        ]
-      }
-    ],
     "SessionEnd": [
       {
         "matcher": "exit",
