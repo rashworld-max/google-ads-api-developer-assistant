@@ -1,3 +1,17 @@
+# Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Created by the Google Ads API Developer Assistant
 # Copyright 2026 Google LLC
 
@@ -88,7 +102,7 @@ def main(client: GoogleAdsClient, customer_id: str):
             asum = row.offline_conversion_upload_conversion_action_summary
             details.append(f"Action: {asum.conversion_action_name} (Total Success: {asum.successful_event_count}/{asum.total_event_count})")
             for ds in asum.daily_summaries:
-                details.append(f"  - {ds.upload_date}: Success={ds.successful_count}, Fail={ds.failed_count}")
+                details.append(f"  - {ds.upload_date}: Success={ds.successful_count}, Fail={ds.failed_count}, Pending={ds.pending_count}")
 
     history = merge_previous_findings(output_dir)
 
@@ -112,6 +126,7 @@ def main(client: GoogleAdsClient, customer_id: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--customer_id", required=True, help="The Google Ads customer ID.")
     parser.add_argument("-v", "--api_version", type=str, required=True, help="The Google Ads API version.")
     args = parser.parse_args()
     googleads_client = GoogleAdsClient.load_from_storage(version=args.api_version)

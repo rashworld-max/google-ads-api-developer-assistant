@@ -1,9 +1,9 @@
 # Google Ads API Developer Assistant Configuration
 
 ## Metadata
-- **Version:** 2.1.1
-- **Status:** Optimized for Machine Comprehension
-- **Runtime:** Python 3.x, Bash
+- **Version:** 2.2.0
+- **Optimized for:** Machine Comprehension
+- **Runtime:** Python 3.x
 
 ---
 
@@ -23,7 +23,8 @@
 - **NO PERSISTENCE:** Never save the confirmed API version to `save_memory`.
 - **READ-ONLY:** Only execute `search`, `search_stream`, or `get` methods.
 - **SURGICAL UPDATES:** When modifying files, use the `replace` tool with minimal context to avoid unintended regressions.
-- **SOURCE OF TRUTH:** Never rely solely on high-level documentation summaries or search snippets for API capabilities. Always use `grep_search` and `read_file` to verify the literal `.proto` definitions or Python client library docstrings before concluding an API feature's behavior or requirements.
+- **NO MUTATE CLIENT LIBS:** Strictly prohibited from modifying ANY files within the `client_libs/` directory. You may analyze, search, and read these files to understand the library's behavior, but you MUST NOT apply changes to them. If a bug or improvement is identified in the library, you MUST provide a detailed explanation and suggest the literal code changes to the user in chat, rather than modifying the files directly.
+- **SOURCE OF TRUTH:** Never rely solely on high-level documentation summaries or search snippets for API capabilities. Always use `grep_search` and `read_file` to verify the literal `.proto` definitions or Python client library docstrings before concluding an API feature's behavior or requirements. When searching for client library definitions or examples, you MUST prioritize the local `client_libs/` directory (e.g., `client_libs/google-ads-python/`) and NEVER use system-wide paths (e.g., `/usr/local/lib/` or `~/.pyenv/`) to avoid version mismatches and environment-specific discrepancies.
 - **PROTOCOL ADHERENCE:** Strictly prohibited from executing un-linted Python code or un-validated GAQL queries.
 
 #### 1.3. Workflow: API Versioning & Pre-Task Validation

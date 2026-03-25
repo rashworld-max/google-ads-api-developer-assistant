@@ -52,6 +52,7 @@ class TestGetConversionUploadSummary(unittest.TestCase):
         mock_ds.upload_date = "2026-02-24"
         mock_ds.successful_count = 10
         mock_ds.failed_count = 0
+        mock_ds.pending_count = 0
         mock_summary.daily_summaries = [mock_ds]
 
         mock_batch = MagicMock()

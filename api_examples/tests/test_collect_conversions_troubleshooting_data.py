@@ -61,6 +61,7 @@ class TestCollectConversionsTroubleshootingData(unittest.TestCase):
         ds.upload_date = "2026-02-24"
         ds.successful_count = 10
         ds.failed_count = 0
+        ds.pending_count = 0
         asum.daily_summaries = [ds]
 
         mock_batch_customer = MagicMock()

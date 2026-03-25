@@ -1,8 +1,7 @@
 # Google Ads API Conversion Troubleshooting 
 
 ## Metadata
-- **Version:** 2.0
-- **Target API:** Google Ads API (v23)
+- **Version:** 2.2.0
 - **Role:** Technical Reference for AI Assistant
 - **Optimized for:** Machine Comprehension
 
