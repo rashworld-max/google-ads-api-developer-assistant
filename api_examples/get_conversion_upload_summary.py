@@ -1,4 +1,18 @@
 # Copyright 2026 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Copyright 2026 Google LLC
 """Summarizes offline conversion uploads with mandatory calculation logic."""
 
 import argparse
@@ -24,7 +38,7 @@ def main(client: GoogleAdsClient, customer_id: str) -> None:
                 print(f"Total: {s.total_event_count}, Success: {s.successful_event_count}")
                 for ds in s.daily_summaries:
                     # Mandate: total = success + failed + pending
-                    total = ds.successful_count + ds.failed_count
+                    total = ds.successful_count + ds.failed_count + ds.pending_count
                     print(f"  {ds.upload_date}: {ds.successful_count}/{total} successful")
     except GoogleAdsException as ex:
         print(f"Request ID {ex.request_id} failed: {ex.error.code().name}")

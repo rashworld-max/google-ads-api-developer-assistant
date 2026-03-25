@@ -49,6 +49,7 @@ class TestDisapprovedAdsReports(unittest.TestCase):
         
         mock_entry = MagicMock()
         mock_entry.topic = "Adult Content"
+        mock_entry.type_.name = "PROHIBITED"
         mock_row.ad_group_ad.policy_summary.policy_topic_entries = [mock_entry]
 
         mock_batch = MagicMock()

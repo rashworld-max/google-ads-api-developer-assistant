@@ -1,5 +1,11 @@
-* 2.1.1
+* 2.2.0
 - api_examples: api version is a required argument with no default value.
+- Modified /explain to make output more structured.
+- Added license to all files.
+- Fixed bug in custom_config.py hook script and added modifying policy files.
+- Surgical update rules.
+- Rule to prohibit dummy credentials.
+- Rule for Asset Group URL Filtering
 
 * 2.1.0
 - Updated Workflow: API Versioning & Pre-Task Validation
