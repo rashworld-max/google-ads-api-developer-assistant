@@ -130,9 +130,7 @@ b.  **Set Context in Gemini:** The `gemini` command must be run from the root of
         "includeDirectories": [
           "/path/to/your/google-ads-api-developer-assistant/api_examples",
           "/path/to/your/google-ads-api-developer-assistant/saved/code",
-          "/path/to/your/google-ads-python",
-          "client_libs/google-ads-php",
-          "client_libs/google-ads-ruby"
+          "/path/to/your/google-ads-python"
         ]
       }
     }
