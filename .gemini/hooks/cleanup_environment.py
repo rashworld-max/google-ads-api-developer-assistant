@@ -11,11 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+# CRITICAL MAINTENANCE NOTE - DO NOT REMOVE
+# ==============================================================================
+# ⚠️ DO NOT migrate lifecycle hooks (SessionStart/SessionEnd) to the extension
+# manifest (hooks/hooks.json or gemini-extension.json).
+#
+# Doing so breaks hook execution in the OSS version of gemini-cli used in this
+# workspace. Hooks MUST remain registered in `.gemini/settings.json` using the
+# `matcher` wrapper list structure to function correctly.
+# ==============================================================================
 
 import os
 import shutil
 import sys
-import datetime
 
 def cleanup():
     # Determine paths
@@ -43,7 +52,16 @@ def cleanup():
             except Exception as e:
                 print(f"Failed to delete {file_path}. Reason: {e}", file=sys.stderr)
         
-        timestamp = datetime.datetime.now()
+        # Delete isolated virtual environment
+        venv_dir = os.path.join(project_root, ".venv")
+        if os.path.exists(venv_dir):
+            print(f"Deleting virtual environment at {venv_dir}...", file=sys.stderr)
+            try:
+                shutil.rmtree(venv_dir)
+                print("Virtual environment deleted successfully.", file=sys.stderr)
+            except Exception as e:
+                print(f"Failed to delete virtual environment: {e}", file=sys.stderr)
+
 
     except Exception as e:
         print(f"Error cleaning up config directory: {e}", file=sys.stderr)

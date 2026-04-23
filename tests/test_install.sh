@@ -180,56 +180,6 @@ mkdir -p "${FAKE_PROJECT}/client_libs/google-ads-ruby"
 touch "${FAKE_PROJECT}/client_libs/google-ads-ruby/Gemfile"
 
 
-# --- Test Case 3: Install Deps ---
-echo "--- Running install.sh --php --ruby --install-deps ---"
-# Clear log
-rm -f "${TEST_TMP_DIR}/install_log.txt"
 
-if ! bash "${SETUP_SCRIPT_PATH}" --php --ruby --install-deps; then
-    echo "FAIL: install.sh failed with --install-deps"
-    exit 1
-fi
-
-LOG_CONTENT=$(cat "${TEST_TMP_DIR}/install_log.txt" 2>/dev/null || true)
-echo "Install Log Content:"
-echo "$LOG_CONTENT"
-
-if echo "$LOG_CONTENT" | grep -q "python -m pip install --upgrade google-ads"; then
-    echo "PASS: python pip install detected"
-else
-    echo "FAIL: python pip install NOT detected"
-    exit 1
-fi
-
-if echo "$LOG_CONTENT" | grep -q "composer install"; then
-    echo "PASS: composer install detected"
-else
-    echo "FAIL: composer install NOT detected"
-    exit 1
-fi
-
-if echo "$LOG_CONTENT" | grep -q "bundle install"; then
-    echo "PASS: bundle install detected"
-else
-    echo "FAIL: bundle install NOT detected"
-    exit 1
-fi
-
-# --- Test Case 4: No Install Deps (Verify NO install) ---
-echo "--- Running install.sh --php --ruby (NO deps) ---"
-rm -f "${TEST_TMP_DIR}/install_log.txt"
-
-if ! bash "${SETUP_SCRIPT_PATH}" --php --ruby; then
-    echo "FAIL: install.sh failed without --install-deps"
-    exit 1
-fi
-
-if [[ -f "${TEST_TMP_DIR}/install_log.txt" ]]; then
-    echo "FAIL: install_log.txt should not exist (or be empty) but found content:"
-    cat "${TEST_TMP_DIR}/install_log.txt"
-    exit 1
-else
-    echo "PASS: No install commands executed"
-fi
 
 echo "ALL TESTS PASSED"

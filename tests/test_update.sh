@@ -107,4 +107,67 @@ echo "--- Test Case 3: Update existing PHP library ---"
 (cd "${FAKE_PROJECT}" && bash update.sh --php)
 echo "PASS: update.sh --php ran successfully with existing lib"
 
+# --- Test Case 4: Run update.sh --context_dir (Valid) ---
+echo "--- Test Case 4: Add valid context directory ---"
+VALID_DIR="${TEST_DIR}/valid_dir"
+mkdir -p "$VALID_DIR"
+(cd "${FAKE_PROJECT}" && bash update.sh --context_dir "$VALID_DIR")
+
+# Check if settings.json updated
+if /usr/bin/jq -r '.context.includeDirectories[]' "${FAKE_PROJECT}/.gemini/settings.json" | grep -q "valid_dir"; then
+    echo "PASS: settings.json updated with valid context_dir"
+else
+    echo "FAIL: settings.json missing valid context_dir"
+    cat "${FAKE_PROJECT}/.gemini/settings.json"
+    exit 1
+fi
+
+# --- Test Case 5: Run update.sh --context_dir (Invalid) ---
+echo "--- Test Case 5: Add invalid context directory ---"
+INVALID_DIR="${TEST_DIR}/non_existent_dir"
+
+# We capture stderr to check for error message
+(cd "${FAKE_PROJECT}" && bash update.sh --context_dir "$INVALID_DIR" 2> "${TEST_DIR}/stderr.txt")
+
+# Check if error message printed to stderr
+if grep -q "ERROR: Directory not found" "${TEST_DIR}/stderr.txt"; then
+    echo "PASS: error message printed to stderr for invalid context_dir"
+else
+    echo "FAIL: missing error message for invalid context_dir"
+    cat "${TEST_DIR}/stderr.txt"
+    exit 1
+fi
+
+# Verify it was NOT added to settings.json
+if /usr/bin/jq -r '.context.includeDirectories[]' "${FAKE_PROJECT}/.gemini/settings.json" | grep -q "non_existent_dir"; then
+    echo "FAIL: settings.json updated with invalid context_dir"
+    exit 1
+else
+    echo "PASS: settings.json not updated with invalid context_dir"
+fi
+
+# --- Test Case 6: Run update.sh --context_dir (Comma separated list with invalid) ---
+echo "--- Test Case 6: Multiple context dirs, some valid, some invalid ---"
+VALID_DIR2="${TEST_DIR}/valid_dir2"
+mkdir -p "$VALID_DIR2"
+INVALID_DIR2="${TEST_DIR}/non_existent_dir2"
+
+(cd "${FAKE_PROJECT}" && bash update.sh --context_dir "$VALID_DIR2,$INVALID_DIR2")
+
+# Verify VALID_DIR2 was added
+if /usr/bin/jq -r '.context.includeDirectories[]' "${FAKE_PROJECT}/.gemini/settings.json" | grep -q "valid_dir2"; then
+    echo "PASS: valid_dir2 added from mixed list"
+else
+    echo "FAIL: valid_dir2 missing from mixed list"
+    exit 1
+fi
+
+# Verify INVALID_DIR2 was NOT added
+if /usr/bin/jq -r '.context.includeDirectories[]' "${FAKE_PROJECT}/.gemini/settings.json" | grep -q "non_existent_dir2"; then
+    echo "FAIL: non_existent_dir2 added from mixed list"
+    exit 1
+else
+    echo "PASS: non_existent_dir2 not added from mixed list"
+fi
+
 echo "ALL TESTS PASSED"

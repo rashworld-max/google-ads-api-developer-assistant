@@ -46,6 +46,7 @@ usage() {
   echo "    --ruby        Ensure google-ads-ruby is present and updated"
   echo "    --java        Ensure google-ads-java is present and updated"
   echo "    --dotnet      Ensure google-ads-dotnet is present and updated"
+  echo "    --context_dir <dirs> Comma-separated list of directories to add to settings.json"
   echo ""
   echo "  If flags are provided, the script will ensure those libraries are installed"
   echo "  (cloned) and registered in .gemini/settings.json if they weren't already."
@@ -59,6 +60,8 @@ INSTALL_RUBY=false
 INSTALL_JAVA=false
 INSTALL_DOTNET=false
 ANY_SELECTED=false
+CONTEXT_DIR_ARG=""
+INVALID_CONTEXT_DIRS=()
 
 # --- Argument Parsing ---
 while [[ $# -gt 0 ]]; do
@@ -91,6 +94,17 @@ while [[ $# -gt 0 ]]; do
       INSTALL_DOTNET=true
       ANY_SELECTED=true
       shift
+      ;;
+    --context_dir)
+      shift
+      while [[ $# -gt 0 ]] && [[ "$1" != -* ]]; do
+        CONTEXT_DIR_ARG="${CONTEXT_DIR_ARG}${1},"
+        shift
+      done
+      if [[ -z "${CONTEXT_DIR_ARG:-}" ]]; then
+         err "ERROR: --context_dir requires a value"
+         exit 1
+      fi
       ;;
     *)
       # Ignore unknown options or handle them
@@ -278,6 +292,41 @@ if [[ ! -f "${SETTINGS_FILE}" ]]; then
   exit 1
 fi
 
+# --- Handle context_dir argument ---
+if [[ -n "${CONTEXT_DIR_ARG:-}" ]]; then
+    # Trim spaces on either side of comma and at the end of the argument string
+    CONTEXT_DIR_ARG=$(echo "${CONTEXT_DIR_ARG}" | sed -e 's/[[:space:]]*,[[:space:]]*/,/g' -e 's/,,*/,/g' -e 's/,$//' -e 's/[[:space:]]*$//')
+    IFS=',' read -ra DIRS <<< "${CONTEXT_DIR_ARG}"
+    for dir in "${DIRS[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            INVALID_CONTEXT_DIRS+=("Directory not found: $dir")
+            continue
+        fi
+        
+        # Resolve absolute path for consistency
+        if ! abs_dir=$(realpath "$dir" 2>/dev/null); then
+            INVALID_CONTEXT_DIRS+=("Could not resolve absolute path for: $dir")
+            continue
+        fi
+
+        echo "Adding context directory: ${abs_dir} to settings.json..."
+        if [[ -f "${SETTINGS_FILE}" ]]; then
+            if ! jq --arg new_path "${abs_dir}" '
+                if (.context.includeDirectories | any(. == $new_path)) then 
+                    . 
+                else 
+                    .context.includeDirectories += [$new_path] 
+                end' "${SETTINGS_FILE}" > "${SETTINGS_FILE}.tmp"; then
+                err "ERROR: Failed to update ${SETTINGS_FILE} for ${abs_dir}"
+                continue
+            fi
+            mv "${SETTINGS_FILE}.tmp" "${SETTINGS_FILE}"
+        else
+             err "ERROR: settings.json not found while adding context_dir"
+        fi
+    done
+fi
+
 echo "Reading ${SETTINGS_FILE} to find client libraries..."
 
 # Read all includeDirectories
@@ -328,5 +377,11 @@ for lib_path in "${INCLUDE_DIRS[@]}"; do
     fi
     echo "Successfully updated ${abs_lib_path}."
 done
+
+if [[ ${#INVALID_CONTEXT_DIRS[@]} -gt 0 ]]; then
+    for err_msg in "${INVALID_CONTEXT_DIRS[@]}"; do
+        err "ERROR: $err_msg"
+    done
+fi
 
 echo "Update complete."

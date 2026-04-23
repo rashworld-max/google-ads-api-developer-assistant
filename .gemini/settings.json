@@ -1,5 +1,6 @@
 {
   "ui": {
+    "errorVerbosity": "full",
     "accessibility": {
       "enableLoadingPhrases": false
     },
@@ -23,7 +24,12 @@
           {
             "name": "init",
             "type": "command",
-            "command": "python3 .gemini/hooks/custom_config.py"
+            "command": "python3 .gemini/hooks/configure_environment.py"
+          },
+          {
+            "name": "check_version",
+            "type": "command",
+            "command": "python3 .gemini/hooks/check_github_version.py"
           }
         ]
       }
@@ -35,7 +41,7 @@
           {
             "name": "cleanup",
             "type": "command",
-            "command": "python3 .gemini/hooks/cleanup_config.py"
+            "command": "python3 .gemini/hooks/cleanup_environment.py"
           }
         ]
       }

@@ -22,7 +22,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 hooks_dir = os.path.join(script_dir, "../.gemini/hooks")
 sys.path.append(hooks_dir)
 
-import custom_config
+import configure_environment
 
 class TestCustomConfig(unittest.TestCase):
 
@@ -35,7 +35,7 @@ class TestCustomConfig(unittest.TestCase):
         end
         """
         with patch("builtins.open", unittest.mock.mock_open(read_data=content)):
-            data = custom_config.parse_ruby_config("dummy.rb")
+            data = configure_environment.parse_ruby_config("dummy.rb")
             self.assertEqual(data["json_key_file_path"], "/path/to/key.json")
             self.assertEqual(data["impersonated_email"], "user@example.com")
 
@@ -47,7 +47,7 @@ jsonKeyFilePath = "/path/to/key.json"
 impersonatedEmail = "user@example.com"
         """
         with patch("builtins.open", unittest.mock.mock_open(read_data=content)):
-            data = custom_config.parse_ini_config("dummy.ini")
+            data = configure_environment.parse_ini_config("dummy.ini")
             self.assertEqual(data["json_key_file_path"], "/path/to/key.json")
             self.assertEqual(data["impersonated_email"], "user@example.com")
 
@@ -58,7 +58,7 @@ api.googleads.oAuth2SecretsJsonPath=/path/to/key.json
 api.googleads.oAuth2PrnEmail=user@example.com
         """
         with patch("builtins.open", unittest.mock.mock_open(read_data=content)):
-            data = custom_config.parse_properties_config("dummy.properties")
+            data = configure_environment.parse_properties_config("dummy.properties")
             self.assertEqual(data["json_key_file_path"], "/path/to/key.json")
             self.assertEqual(data["impersonated_email"], "user@example.com")
 
@@ -69,7 +69,7 @@ api.googleads.oAuth2PrnEmail=user@example.com
             "impersonated_email": "user@example.com"
         }
         with patch("builtins.open", unittest.mock.mock_open()) as mocked_file:
-            custom_config.write_yaml_config(data, "dummy.yaml", "2.0.0")
+            configure_environment.write_yaml_config(data, "dummy.yaml", "2.0.0")
             mocked_file.assert_called_once_with("dummy.yaml", "w")
             handle = mocked_file()
             # Verify json_key_file_path is written

@@ -1,7 +1,7 @@
 # Google Ads API Conversion Troubleshooting 
 
 ## Metadata
-- **Version:** 2.2.0
+- **Version:** 2.3.0
 - **Role:** Technical Reference for AI Assistant
 - **Optimized for:** Machine Comprehension
 

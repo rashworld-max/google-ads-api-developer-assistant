@@ -1,8 +1,25 @@
+* 2.3.0
+- Added context_dir argument to update scripts to add additional directories. (e.g., your codebase)
+- When the assistant executes Python code it is in a virtual environment that has the Google Ads API Client Libraries installed.
+- AT init check the current version of the extension again the latest on github. Display a message is an update is
+available.
+- Silenced extraneous startup messages.
+- Changed name of startup hook to configure_environment.py.
+- Changed name of cleanup hook to cleanup_environment.py.
+- Removed placeholders from GEMINI.md.
+- Optimized code to retrieve disapproved ads.
+- Silenced automated pip install screen output telemetry noise.
+- Attached diagnostic dynamic path traces logs auditing isolation SessionStart traversals.
+- Documented Rule 4.5 Workspace Isolation Compliance enforcing explicit binary pointers.
+- Zero tolerance rule to prevent OR operator in GAQL.
+- Zero tolerance rule to prevent FROM operator in metadata queries.
+- Fiaex formatting in README.md.
+
 * 2.2.0
 - api_examples: api version is a required argument with no default value.
 - Modified /explain to make output more structured.
 - Added license to all files.
-- Fixed bug in custom_config.py hook script and added modifying policy files.
+- Fixed bug in configure_environment.py hook script and added modifying policy files.
 - Surgical update rules.
 - Rule to prohibit dummy credentials.
 - Rule for Asset Group URL Filtering
@@ -13,7 +30,7 @@
 - Modified explain command to return structured explanations.
 
 * 2.0.1
-- Added unit tests for custom_config.py hook script.
+- Added unit tests for configure_environment.py hook script.
 - Added unit tests for cleanup_config.py hook script.
 - Verified project tests pass by isolating from client_libs collection errors.
 - Fixed linting errors in new test files.

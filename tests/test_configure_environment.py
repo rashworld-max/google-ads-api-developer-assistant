@@ -23,61 +23,23 @@ project_root = os.path.abspath(os.path.join(script_dir, ".."))
 hooks_dir = os.path.join(project_root, ".gemini/hooks")
 sys.path.append(hooks_dir)
 
-import custom_config  # noqa: E402
+import configure_environment  # noqa: E402
 
-class TestCustomConfig(unittest.TestCase):
+class TestConfigureEnvironment(unittest.TestCase):
 
     def test_get_version_success(self):
         with patch("subprocess.run") as mocked_run:
             mocked_run.return_value = MagicMock(stdout="2.1.0\n", check=True)
-            version = custom_config.get_version("dummy_script.py")
+            version = configure_environment.get_version("dummy_script.py")
             self.assertEqual(version, "2.1.0")
             mocked_run.assert_called_once()
 
     def test_get_version_failure(self):
         with patch("subprocess.run") as mocked_run:
             mocked_run.side_effect = Exception("failed")
-            version = custom_config.get_version("dummy_script.py")
+            version = configure_environment.get_version("dummy_script.py")
             self.assertEqual(version, "666")  # Fallback
 
-    @patch("sys.stderr.write")
-    def test_check_google_ads_version_outdated(self, mock_stderr):
-        with patch("subprocess.run") as mocked_run:
-            mocked_run.return_value = MagicMock(returncode=0, stdout="28.1.0\n")
-            custom_config.check_google_ads_version()
-            mocked_run.assert_called_once()
-            self.assertTrue(mock_stderr.called)
-            outputs = "".join(call[0][0] for call in mock_stderr.call_args_list)
-            self.assertIn("WARNING: google-ads version is 28.1.0", outputs)
-
-    @patch("sys.stderr.write")
-    def test_check_google_ads_version_up_to_date(self, mock_stderr):
-        with patch("subprocess.run") as mocked_run:
-            mocked_run.return_value = MagicMock(returncode=0, stdout="30.0.0\n")
-            custom_config.check_google_ads_version()
-            mocked_run.assert_called_once()
-            # It might have been called with other things if stderr was used, but in this function it shouldn't.
-            # print could be tricky so just check if WARNING is in it.
-            outputs = "".join(call[0][0] for call in mock_stderr.call_args_list)
-            self.assertNotIn("WARNING", outputs)
-
-    @patch("sys.stderr.write")
-    def test_check_google_ads_version_error_code(self, mock_stderr):
-        with patch("subprocess.run") as mocked_run:
-            mocked_run.return_value = MagicMock(returncode=1, stdout="")
-            custom_config.check_google_ads_version()
-            mocked_run.assert_called_once()
-            outputs = "".join(call[0][0] for call in mock_stderr.call_args_list)
-            self.assertNotIn("WARNING", outputs)
-
-    @patch("sys.stderr.write")
-    def test_check_google_ads_version_exception(self, mock_stderr):
-        with patch("subprocess.run") as mocked_run:
-            mocked_run.side_effect = Exception("failed")
-            custom_config.check_google_ads_version()
-            mocked_run.assert_called_once()
-            outputs = "".join(call[0][0] for call in mock_stderr.call_args_list)
-            self.assertNotIn("WARNING", outputs)
 
 
     def test_parse_ruby_config(self):
@@ -87,7 +49,7 @@ class TestCustomConfig(unittest.TestCase):
         c.client_secret = 'secret789'
         """
         with patch("builtins.open", mock_open(read_data=content)):
-            data = custom_config.parse_ruby_config("dummy.rb")
+            data = configure_environment.parse_ruby_config("dummy.rb")
             self.assertEqual(data["developer_token"], "token123")
             self.assertEqual(data["client_id"], "id456")
             self.assertEqual(data["client_secret"], "secret789")
@@ -95,14 +57,14 @@ class TestCustomConfig(unittest.TestCase):
     def test_parse_ini_config(self):
         content = "[DEFAULT]\ndeveloperToken = token123\nclientId = 'id456'\n"
         with patch("builtins.open", mock_open(read_data=content)):
-            data = custom_config.parse_ini_config("dummy.ini")
+            data = configure_environment.parse_ini_config("dummy.ini")
             self.assertEqual(data["developer_token"], "token123")
             self.assertEqual(data["client_id"], "id456")
 
     def test_parse_properties_config(self):
         content = "api.googleads.developerToken=token123\napi.googleads.clientId=id456\n"
         with patch("builtins.open", mock_open(read_data=content)):
-            data = custom_config.parse_properties_config("dummy.properties")
+            data = configure_environment.parse_properties_config("dummy.properties")
             self.assertEqual(data["developer_token"], "token123")
             self.assertEqual(data["client_id"], "id456")
 
@@ -114,7 +76,7 @@ class TestCustomConfig(unittest.TestCase):
             "refresh_token": "refresh000"
         }
         with patch("builtins.open", mock_open()) as mocked_file:
-            success = custom_config.write_yaml_config(data, "dummy.yaml")
+            success = configure_environment.write_yaml_config(data, "dummy.yaml")
             self.assertTrue(success)
             handle = mocked_file()
             handle.write.assert_any_call("developer_token: token123\n")
@@ -127,7 +89,7 @@ class TestCustomConfig(unittest.TestCase):
             "impersonated_email": "user@example.com"
         }
         with patch("builtins.open", mock_open()) as mocked_file:
-            success = custom_config.write_yaml_config(data, "dummy.yaml")
+            success = configure_environment.write_yaml_config(data, "dummy.yaml")
             self.assertTrue(success)
             handle = mocked_file()
             handle.write.assert_any_call("json_key_file_path: /path/to/key.json\n")
@@ -140,7 +102,7 @@ class TestCustomConfig(unittest.TestCase):
         with patch("os.path.exists", return_value=True), \
              patch("shutil.copy2") as mocked_copy, \
              patch("builtins.open", mock_open()) as mocked_file:
-            success = custom_config.copy_and_append_version("home.yaml", "target.yaml", "2.1.0")
+            success = configure_environment.copy_and_append_version("home.yaml", "target.yaml", "2.1.0")
             self.assertTrue(success)
             mocked_copy.assert_called_once_with("home.yaml", "target.yaml")
             
@@ -152,7 +114,7 @@ class TestCustomConfig(unittest.TestCase):
     @patch("builtins.open", new_callable=mock_open)
     def test_manage_policy_file_creates_new(self, mock_file, mock_exists, mock_makedirs):
         with patch("os.path.expanduser", return_value="/mock/home"):
-            custom_config.manage_policy_file()
+            configure_environment.manage_policy_file()
             mock_makedirs.assert_called_once_with("/mock/home/.gemini/policies", exist_ok=True)
             mock_file.assert_called_once_with("/mock/home/.gemini/policies/ads_assistant.toml", "w")
             handle = mock_file()
@@ -166,7 +128,7 @@ class TestCustomConfig(unittest.TestCase):
         existing_content = '[[rule]]\ntoolName = ["other"]\ndecision = "allow"\n'
         with patch("builtins.open", mock_open(read_data=existing_content)) as mock_file:
             with patch("os.path.expanduser", return_value="/mock/home"):
-                custom_config.manage_policy_file()
+                configure_environment.manage_policy_file()
                 handle = mock_file()
                 written = "".join(call[0][0] for call in handle.write.call_args_list)
                 self.assertIn('toolName = ["other"]', written)
@@ -179,13 +141,46 @@ class TestCustomConfig(unittest.TestCase):
         existing_content = '[[rule]]\ntoolName = ["save_memory"]\ndecision = "allow"\n[[rule]]\ntoolName = ["other"]\n'
         with patch("builtins.open", mock_open(read_data=existing_content)) as mock_file:
             with patch("os.path.expanduser", return_value="/mock/home"):
-                custom_config.manage_policy_file()
+                configure_environment.manage_policy_file()
                 handle = mock_file()
                 written = "".join(call[0][0] for call in handle.write.call_args_list)
                 self.assertIn('toolName = ["save_memory"]', written)
                 self.assertIn('decision = "deny"', written)
                 self.assertNotIn('decision = "allow"', written)
                 self.assertIn('toolName = ["other"]', written)
+
+    @patch("os.path.exists")
+    @patch("subprocess.run")
+    def test_create_virtual_env_success(self, mock_run, mock_exists):
+        mock_exists.return_value = False
+        mock_run.return_value = MagicMock(returncode=0)
+        
+        configure_environment.create_virtual_env("/mock/root")
+        
+        mock_exists.assert_called_once_with("/mock/root/.venv")
+        self.assertEqual(mock_run.call_count, 2)
+        
+        called_args = [call[0][0] for call in mock_run.call_args_list]
+        # First call: venv creation
+        self.assertIn("-m", called_args[0])
+        self.assertIn("venv", called_args[0])
+        # Second call: pip install
+        self.assertIn("install", called_args[1])
+        self.assertIn("google-ads", called_args[1])
+
+    @patch("builtins.print")
+    def test_finish_hook_custom_vars(self, mock_print):
+        import json
+        with patch("os.environ", {"PATH": "/usr/bin"}):
+            configure_environment.finish_hook("/mock/target.yaml", "2.1.0")
+            
+            mock_print.assert_called_once()
+            args, kwargs = mock_print.call_args
+            data = json.loads(args[0])
+            self.assertIn("custom_vars", data)
+            self.assertEqual(data["custom_vars"]["ads_assistant"], "2.1.0")
+            self.assertEqual(data["custom_vars"]["GOOGLE_ADS_CONFIGURATION_FILE_PATH"], "/mock/target.yaml")
+            self.assertIn(".venv/bin", data["custom_vars"]["PATH"])
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,13 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ==============================================================================
+# CRITICAL MAINTENANCE NOTE - DO NOT REMOVE
+# ==============================================================================
+# ⚠️ DO NOT migrate lifecycle hooks (SessionStart/SessionEnd) to the extension
+# manifest (hooks/hooks.json or gemini-extension.json).
+#
+# Doing so breaks hook execution in the OSS version of gemini-cli used in this
+# workspace. Hooks MUST remain registered in `.gemini/settings.json` using the
+# `matcher` wrapper list structure to function correctly.
+# ==============================================================================
 
+import json
 import os
+import re
 import shutil
 import subprocess
-import json
 import sys
-import re
 
 
 def get_version(ext_version_script):
@@ -121,9 +131,15 @@ def write_yaml_config(data, target_path, version=None):
             )
 
             if service_account:
-                f.write("json_key_file_path: " + data["json_key_file_path"] + "\n")
+                f.write(
+                    "json_key_file_path: " + data["json_key_file_path"] + "\n"
+                )
                 if "impersonated_email" in data:
-                    f.write("impersonated_email: " + data["impersonated_email"] + "\n")
+                    f.write(
+                        "impersonated_email: "
+                        + data["impersonated_email"]
+                        + "\n"
+                    )
             else:
                 f.write(
                     "client_id: "
@@ -163,14 +179,14 @@ def copy_and_append_version(home_config, target_config, version, lang="YAML"):
             if lang == "YAML":
                 line = f"ads_assistant: {version}"
             elif lang == "PHP":
-                line = f"ads_assistant = \"{version}\""
+                line = f'ads_assistant = "{version}"'
             elif lang == "Ruby":
                 line = f"ENV['ADS_ASSISTANT'] = '{version}'"
             elif lang == "Java":
                 line = f"api.googleads.ads_assistant={version}"
             else:
                 line = f"ads_assistant: {version}"
-            
+
             f.write(f"\n{line}\n")
         return True
     except Exception as e:
@@ -183,10 +199,20 @@ def finish_hook(target_path, version):
     # Prepare the context string that will be injected into the session
     context_string = "StartSession initialized."
 
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(script_dir, "../.."))
+
     # Construct the JSON output required by Gemini CLI
+    # Setting systemMessage to empty string to prevent repeated output as requested by user
     output = {
         "hookSpecificOutput": {"additionalContext": context_string},
-        "systemMessage": "Python StartSession hook active. Custom context loaded.",
+        "systemMessage": "",
+        "custom_vars": {
+            "PATH": f"{project_root}/.venv/bin:{os.environ.get('PATH', '')}",
+            "VIRTUAL_ENV": f"{project_root}/.venv",
+            "GOOGLE_ADS_CONFIGURATION_FILE_PATH": target_path,
+            "ads_assistant": version,
+        },
     }
     # Output to stdout
     print(json.dumps(output))
@@ -197,9 +223,9 @@ def manage_policy_file():
     home_dir = os.path.expanduser("~")
     policy_dir = os.path.join(home_dir, ".gemini", "policies")
     policy_file = os.path.join(policy_dir, "ads_assistant.toml")
-    
+
     os.makedirs(policy_dir, exist_ok=True)
-    
+
     rule_content = (
         "[[rule]]\n"
         'toolName = ["save_memory"]\n'
@@ -207,7 +233,7 @@ def manage_policy_file():
         'priority = 200\n'
         'description = "Prevent the agent from using the /memory add command."\n'
     )
-    
+
     if not os.path.exists(policy_file):
         with open(policy_file, "w") as f:
             f.write(rule_content)
@@ -219,7 +245,7 @@ def manage_policy_file():
     lines = content.splitlines()
     new_lines = []
     target_rule_found = False
-    
+
     i = 0
     while i < len(lines):
         line = lines[i]
@@ -231,7 +257,7 @@ def manage_policy_file():
                     is_target = True
                     break
                 j += 1
-            
+
             if is_target:
                 target_rule_found = True
                 new_lines.extend(rule_content.strip().split("\n"))
@@ -254,94 +280,122 @@ def manage_policy_file():
             f.write(new_content)
 
 
-def check_google_ads_version():
-    """Checks the google-ads library version and warns if outdated."""
-    try:
-        result = subprocess.run(
-            [
-                sys.executable,
-                "-c",
-                "import google.ads.googleads; print(google.ads.googleads.VERSION)",
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode == 0:
-            version_str = result.stdout.strip()
-            parts = tuple(int(p) for p in version_str.split(".") if p.isdigit())
-            if parts and parts < (29, 2, 0):
-                print(f"WARNING: google-ads version is {version_str}.", file=sys.stderr)
-                print(
-                    "To make use of the latest features, run 'python -m pip install --upgrade google-ads' and restart gemini-cli.",
-                    file=sys.stderr,
-                )
-    except Exception:
-        pass
+def create_virtual_env(project_root):
+    """Creates a virtual environment in the project root if it doesn't exist."""
+    venv_dir = os.path.join(project_root, ".venv")
+    if not os.path.exists(venv_dir):
+        print(f"Creating virtual environment in {venv_dir}...", file=sys.stderr)
+        try:
+            # Use sys.executable to ensure we use the same Python version
+            import subprocess
+
+            subprocess.run([sys.executable, "-m", "venv", venv_dir], check=True)
+            print("Virtual environment created successfully.", file=sys.stderr)
+
+            # Install google-ads
+            venv_python = os.path.join(venv_dir, "bin", "python3")
+            print(f"Installing google-ads into {venv_dir}...", file=sys.stderr)
+            subprocess.run(
+                [venv_python, "-m", "pip", "install", "-q", "google-ads", "ruff"],
+                check=True,
+                stdout=subprocess.DEVNULL,
+            )
+            print("google-ads installed successfully.", file=sys.stderr)
+        except Exception as e:
+            print(f"Failed to create virtual environment: {e}", file=sys.stderr)
+    else:
+        print("Virtual environment already exists.", file=sys.stderr)
 
 
 def main():
-    print("DEBUG: Executing custom_config.py...", file=sys.stderr)
-    manage_policy_file()
-    check_google_ads_version()
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(script_dir, "../.."))
-    config_dir = os.path.join(project_root, "config")
-    ext_version_script = os.path.join(
-        project_root, ".gemini/skills/ext_version/scripts/get_extension_version.py"
-    )
+    log_path = os.path.join(script_dir, "hook_debug.log")
+    log_file = open(log_path, "a", buffering=1)  # buffering=1 for line-buffered writes
+    import sys
 
-    os.makedirs(config_dir, exist_ok=True)
-    version = get_version(ext_version_script)
+    sys.stderr = log_file
 
-    home_dir = os.path.expanduser("~")
-    python_home = os.path.join(home_dir, "google-ads.yaml")
-    python_target = os.path.join(config_dir, "google-ads.yaml")
+    try:
+        print("DEBUG: Executing configure_environment.py...", file=sys.stderr)
+        manage_policy_file()
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(script_dir, "../.."))
 
-    # 1. Try Python YAML first
-    if copy_and_append_version(python_home, python_target, version, lang="YAML"):
-        print("Configured Python config directly", file=sys.stderr)
-    else:
-        # 2. Try fallbacks
-        fallbacks = [
-            ("PHP", "google_ads_php.ini", parse_ini_config),
-            ("Ruby", "google_ads_config.rb", parse_ruby_config),
-            ("Java", "ads.properties", parse_properties_config),
-        ]
+        # Create isolated virtual environment
+        create_virtual_env(project_root)
+        config_dir = os.path.join(project_root, "config")
+        ext_version_script = os.path.join(
+            project_root,
+            ".gemini/skills/ext_version/scripts/get_extension_version.py",
+        )
 
-        found_fallback = False
-        for lang, filename, parser in fallbacks:
-            home_path = os.path.join(home_dir, filename)
-            target_path = os.path.join(config_dir, filename)
-            
-            if os.path.exists(home_path):
-                print(
-                    f"Found {lang} config at {home_path}. Copying and creating a Python YAML fallback...",
-                    file=sys.stderr,
-                )
-                
-                # Copy original file to config dir and append version
-                copy_and_append_version(home_path, target_path, version, lang=lang)
-                
-                # Parse the original file and create a new google-ads.yaml in the config dir
-                data = parser(home_path)
-                if write_yaml_config(data, python_target, version=version):
+        os.makedirs(config_dir, exist_ok=True)
+        version = get_version(ext_version_script)
+
+        home_dir = os.path.expanduser("~")
+        print(f"DEBUG: home_dir={home_dir}", file=sys.stderr)
+        python_home = os.path.join(home_dir, "google-ads.yaml")
+        print(
+            f"DEBUG: python_home={python_home} (exists={os.path.exists(python_home)})",
+            file=sys.stderr,
+        )
+        python_target = os.path.join(config_dir, "google-ads.yaml")
+        print(f"DEBUG: python_target={python_target}", file=sys.stderr)
+
+        # 1. Try Python YAML first
+        if copy_and_append_version(
+            python_home, python_target, version, lang="YAML"
+        ):
+            print("Configured Python config directly", file=sys.stderr)
+        else:
+            # 2. Try fallbacks
+            fallbacks = [
+                ("PHP", "google_ads_php.ini", parse_ini_config),
+                ("Ruby", "google_ads_config.rb", parse_ruby_config),
+                ("Java", "ads.properties", parse_properties_config),
+            ]
+
+            found_fallback = False
+            for lang, filename, parser in fallbacks:
+                home_path = os.path.join(home_dir, filename)
+                target_path = os.path.join(config_dir, filename)
+
+                if os.path.exists(home_path):
                     print(
-                        f"Successfully generated {python_target} from {lang} config",
+                        f"Found {lang} config at {home_path}. Copying and creating a Python YAML fallback...",
                         file=sys.stderr,
                     )
-                    found_fallback = True
-                    break
 
-        if not found_fallback:
-            print(
-                "Error: No Google Ads configuration found in home directory. Please create ~/google-ads.yaml.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
+                    # Copy original file to config dir and append version
+                    copy_and_append_version(
+                        home_path, target_path, version, lang=lang
+                    )
 
-    # 3. Complete Hook Execution
-    finish_hook(python_target, version)
+                    # Parse the original file and create a new google-ads.yaml in the config dir
+                    data = parser(home_path)
+                    if write_yaml_config(data, python_target, version=version):
+                        print(
+                            f"Successfully generated {python_target} from {lang} config",
+                            file=sys.stderr,
+                        )
+                        found_fallback = True
+                        break
+
+            if not found_fallback:
+                print(
+                    "Error: No Google Ads configuration found in home directory. Please create ~/google-ads.yaml.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+
+        # 3. Complete Hook Execution
+        finish_hook(python_target, version)
+    except Exception as e:
+        import traceback
+
+        print(f"CRITICAL HOOK ERROR: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

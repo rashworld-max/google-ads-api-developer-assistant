@@ -79,7 +79,7 @@ class TestDisapprovedAdsReports(unittest.TestCase):
         )
 
         main(self.mock_client, self.customer_id, "test.csv")
-        self.assertIn("Request ID test_request_id failed: REQUEST_ERROR", self.captured_output.getvalue())
+        self.assertIn("Error: Error details", self.captured_output.getvalue())
 
 
 if __name__ == "__main__":

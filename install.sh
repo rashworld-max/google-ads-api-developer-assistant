@@ -73,7 +73,6 @@ INSTALL_RUBY=false
 INSTALL_JAVA=false
 INSTALL_DOTNET=false
 ANY_SELECTED=false
-INSTALL_DEPS=false
 
 # --- Dependency Check ---
 if ! command -v jq &> /dev/null; then
@@ -118,8 +117,7 @@ usage() {
   echo "  The google-ads-python library is always installed by default."
   echo ""
   echo "  Options:"
-  echo "    -h, --help                 Show this help message and exit
-    --install-deps             Install dependencies (e.g. pip packages)"
+  echo "    -h, --help                 Show this help message and exit"
   echo "    --php                      Include google-ads-php"
   echo "    --ruby                     Include google-ads-ruby"
   echo "    --java                     Include google-ads-java"
@@ -159,10 +157,7 @@ while [[ $# -gt 0 ]]; do
       ANY_SELECTED=true
       shift
       ;;
-    --install-deps)
-      INSTALL_DEPS=true
-      shift
-      ;;
+
     *)
       err "ERROR: Unknown argument: $1"
       usage
@@ -334,30 +329,7 @@ else
   echo "WARN: 'gemini' command not found. Skipping extension registration."
 fi
 
-if is_enabled "python" && [[ "${INSTALL_DEPS}" == "true" ]]; then
-  echo "Installing google-ads via pip..."
-  python -m pip install --upgrade google-ads
-fi
 
-if is_enabled "php" && [[ "${INSTALL_DEPS}" == "true" ]]; then
-  echo "Installing google-ads-php dependencies via composer..."
-  eval "path=\"\$LIB_PATH_php\""
-  if [[ -f "${path}/composer.json" ]]; then
-    (cd "${path}" && composer install)
-  else
-    echo "WARN: composer.json not found in ${path}"
-  fi
-fi
-
-if is_enabled "ruby" && [[ "${INSTALL_DEPS}" == "true" ]]; then
-  echo "Installing google-ads-ruby dependencies via bundle..."
-  eval "path=\"\$LIB_PATH_ruby\""
-  if [[ -f "${path}/Gemfile" ]]; then
-    (cd "${path}" && bundle install)
-  else
-    echo "WARN: Gemfile not found in ${path}"
-  fi
-fi
 
 trap - EXIT # Clear the trap
 
@@ -368,5 +340,3 @@ jq '.context.includeDirectories' "${SETTINGS_FILE}"
 echo "Installation complete."
 echo ""
 echo "IMPORTANT: You must configure and verify the development environment for each language you wish to use."
-echo "           (e.g.,  run 'pip install google-ads' for Python, run 'composer install' for PHP, etc.)"
-echo "           If you used --install-deps, you can verify the installation by running 'python -m pip show google-ads' for Python, 'composer show google/ads-api-php-client' for PHP, etc."

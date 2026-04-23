@@ -23,9 +23,9 @@ project_root = os.path.abspath(os.path.join(script_dir, ".."))
 hooks_dir = os.path.join(project_root, ".gemini/hooks")
 sys.path.append(hooks_dir)
 
-import cleanup_config  # noqa: E402
+import cleanup_environment  # noqa: E402
 
-class TestCleanupConfig(unittest.TestCase):
+class TestCleanupEnvironment(unittest.TestCase):
 
     @patch("os.path.exists")
     @patch("os.listdir")
@@ -47,14 +47,16 @@ class TestCleanupConfig(unittest.TestCase):
         mock_isfile.side_effect = is_file_side_effect
         mock_isdir.side_effect = is_dir_side_effect
 
-        cleanup_config.cleanup()
+        cleanup_environment.cleanup()
 
         # Verify calls
         mock_unlink.assert_called_once()
         self.assertIn("file1.txt", mock_unlink.call_args[0][0])
         
-        mock_rmtree.assert_called_once()
-        self.assertIn("dir1", mock_rmtree.call_args[0][0])
+        self.assertEqual(mock_rmtree.call_count, 2)
+        called_dirs = [call[0][0] for call in mock_rmtree.call_args_list]
+        self.assertTrue(any("dir1" in d for d in called_dirs))
+        self.assertTrue(any(".venv" in d for d in called_dirs))
         
         # Verify .gitkeep was NOT touched
         for call in mock_unlink.call_args_list:
@@ -64,11 +66,11 @@ class TestCleanupConfig(unittest.TestCase):
     def test_cleanup_no_config_dir(self, mock_exists):
         mock_exists.return_value = False
         with patch("sys.stderr") as mock_stderr:
-            cleanup_config.cleanup()
+            cleanup_environment.cleanup()
             mock_stderr.write.assert_called()
             # Should not call listdir if it doesn't exist
             with patch("os.listdir") as mock_listdir:
-                cleanup_config.cleanup()
+                cleanup_environment.cleanup()
                 mock_listdir.assert_not_called()
 
 if __name__ == "__main__":

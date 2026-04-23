@@ -8,6 +8,9 @@
     2. Reads '.gemini/settings.json' to locate configured client library repositories.
     3. Updates each found client library repository (git pull).
 
+.PARAMETER ContextDir
+    Comma-separated list of directories to add to .gemini/settings.json context.includeDirectories.
+
 .EXAMPLE
     .\update.ps1
 #>
@@ -17,7 +20,8 @@ param(
     [switch]$Php,
     [switch]$Ruby,
     [switch]$Java,
-    [switch]$Dotnet
+    [switch]$Dotnet,
+    [string[]]$ContextDir
 )
 
 function Get-RepoUrl {
@@ -192,6 +196,7 @@ finally {
 
 
 # --- Handle Specific Library Additions ---
+$InvalidContextDirs = @()
 $SpecifiedLangs = @()
 if ($Python) { $SpecifiedLangs += "python" }
 if ($Php)    { $SpecifiedLangs += "php" }
@@ -239,10 +244,43 @@ if ($SpecifiedLangs.Count -gt 0) {
 # --- Locate and Update Client Libraries ---
 $SettingsFile = Join-Path $ProjectDirAbs ".gemini\settings.json"
 
-if (-not (Test-Path -LiteralPath $SettingsFile)) {
-    Write-Error "ERROR: Settings file not found: $SettingsFile"
-    Write-Error "Please run install.ps1 first."
-    exit 1
+# --- Handle ContextDir argument ---
+if ($null -ne $ContextDir -and $ContextDir.Count -gt 0) {
+    $Dirs = @()
+    foreach ($Item in $ContextDir) {
+        if ($Item -like "*,*") {
+            $Dirs += $Item -split ','
+        } else {
+            $Dirs += $Item
+        }
+    }
+    foreach ($Dir in $Dirs) {
+        $Dir = $Dir.Trim()
+        if ([string]::IsNullOrWhiteSpace($Dir)) { continue }
+        
+        if (-not (Test-Path -LiteralPath $Dir)) {
+            $InvalidContextDirs += "Directory not found: $Dir"
+            continue
+        }
+        
+        $AbsDir = (Get-Item -LiteralPath $Dir).FullName
+        Write-Host "Adding context directory: $AbsDir to settings.json..."
+        
+        # Read and update settings.json
+        $SettingsJson = Get-Content -LiteralPath $SettingsFile -Raw | ConvertFrom-Json
+        
+        if ($null -eq $SettingsJson.context) {
+            $SettingsJson | Add-Member -MemberType NoteProperty -Name "context" -Value @{ includeDirectories = @() }
+        }
+        if ($null -eq $SettingsJson.context.includeDirectories) {
+            $SettingsJson.context | Add-Member -MemberType NoteProperty -Name "includeDirectories" -Value @()
+        }
+        
+        if (-not ($SettingsJson.context.includeDirectories -contains $AbsDir)) {
+            $SettingsJson.context.includeDirectories += $AbsDir
+            $SettingsJson | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $SettingsFile -Encoding UTF8
+        }
+    }
 }
 
 Write-Host "Reading $SettingsFile to find client libraries..."
@@ -298,6 +336,12 @@ try {
 catch {
     Write-Error "ERROR: An error occurred while processing settings or updating libraries: $_"
     exit 1
+}
+
+if ($InvalidContextDirs.Count -gt 0) {
+    foreach ($Err in $InvalidContextDirs) {
+        [Console]::Error.WriteLine("ERROR: $Err")
+    }
 }
 
 Write-Host "Update complete."

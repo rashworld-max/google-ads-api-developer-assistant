@@ -26,7 +26,7 @@ This extension leverages `gemini-cli`'s ability to use `GEMINI.md` files and the
     *   *"Get all ad groups for customer '123-456-7890'."*
     *   *"Find disapproved ads across all campaigns."*
 
-*   **Direct API Execution:** Run the generated Python code from the CLI and view results, often formatted as tables.
+*   **Direct API Execution:** Run the generated Python code from the CLI and view results, often formatted as tables. Execution takes place within a managed virtual environment that has the Google Ads API Client Libraries installed.
 
 *   **CSV Export:** Save tabular API results to a CSV file in the `saved/csv/` directory.
     *   *"Save results to a csv file"*
@@ -35,39 +35,42 @@ This extension leverages `gemini-cli`'s ability to use `GEMINI.md` files and the
     *   Reports are saved to `saved/data/`.
     *   *"Troubleshoot my conversions for customer '123-456-7890'."*
     
-*   **Validate Complex GAQL Queries:** Validate complex GAQL queries to ensure they are valid and will return the expected results. (This query is invalid. Validate it in the Assistant and see what happens/serv)
-    *   *"validate: SELECT
-      campaign.id,
-      campaign.name,
-      campaign.status,
-      campaign.advertising_channel_type,
-      ad_group.id,
-      ad_group.name,
-      ad_group.status,
-      ad_group_ad.ad.id,
-      ad_group_ad.status,
-      ad_group_ad.ad.type,
-      ad_group_ad.policy_summary.policy_topic_entries,
-      metrics.clicks,
-      metrics.impressions,
-      metrics.ctr,
-      metrics.average_cpc,
-      metrics.cost_micros,
-      metrics.conversions,
-      metrics.conversions_value,
-      segments.date,
-      segments.device,
-      segments.ad_network_type,
-      segments.slot,
-      segments.day_of_week
-    FROM ad_group_ad
-    WHERE campaign.status = 'ENABLED'
-      AND ad_group.status = 'ENABLED'
-      AND ad_group_ad.status = 'ENABLED'
-      AND segments.date DURING LAST_39_DAYS
-      AND metrics.impressions > 100
-    ORDER BY metrics.clicks DESC
-    LIMIT 500"*
+*   **Validate Complex GAQL Queries:** Validate complex GAQL queries to ensure they are valid and will return the expected results. The Assistant enforces strict validation rules, such as prohibiting the use of the `OR` operator in GAQL queries and the `FROM` clause in metadata queries.
+    *   *"validate:"*
+        ```sql
+        SELECT
+          campaign.id,
+          campaign.name,
+          campaign.status,
+          campaign.advertising_channel_type,
+          ad_group.id,
+          ad_group.name,
+          ad_group.status,
+          ad_group_ad.ad.id,
+          ad_group_ad.status,
+          ad_group_ad.ad.type,
+          ad_group_ad.policy_summary.policy_topic_entries,
+          metrics.clicks,
+          metrics.impressions,
+          metrics.ctr,
+          metrics.average_cpc,
+          metrics.cost_micros,
+          metrics.conversions,
+          metrics.conversions_value,
+          segments.date,
+          segments.device,
+          segments.ad_network_type,
+          segments.slot,
+          segments.day_of_week
+        FROM ad_group_ad
+        WHERE campaign.status = 'ENABLED'
+          AND ad_group.status = 'ENABLED'
+          AND ad_group_ad.status = 'ENABLED'
+          AND segments.date DURING LAST_39_DAYS
+          AND metrics.impressions > 100
+        ORDER BY metrics.clicks DESC
+        LIMIT 500
+        ```
 
 ## Supported Languages
 
@@ -85,7 +88,7 @@ By default, Python is used for code generation. You can change this by prefacing
 
 1.  Familiarity with Google Ads API concepts and authentication.
 2.  A Google Ads API developer token.
-3.  A configured credentials file in your home directory if using Python, PHP, or Ruby.
+3.  A configured credentials file in your home directory if using Python (`google-ads.yaml`), PHP (`google_ads_php.ini`), or Ruby (`google_ads_config.rb`).
 4.  Gemini CLI installed (see [Gemini CLI docs](https://github.com/google-gemini/gemini-cli)).
 5.  A local clone of each client library for the languages you want to use. `install.sh` (Linux/macOS) or `install.ps1` (Windows) can set this up for you.
 6.  Python >= 3.10 installed and available on your system PATH. This is required for executing the default generated Python code directly from the CLI.
@@ -154,13 +157,10 @@ b.  **Set Context in Gemini:** The `gemini` command must be run from the root of
 
 4.  **Execute and Save:**
     > "Run the code"
-    > ... (results displayed) ...
+    > ... (code displayed as the result of a previous request) ...
     > "Save the results to csv"
 
 ### Customm Commands
-
-There is a bug in `/help`. It does not list custom commands defined in
-`.gemini/commands` under the project directory.
 
 This is a partial list of custom commands:
 
@@ -168,11 +168,7 @@ This is a partial list of custom commands:
 * `/step_by_step <request>` - Format the response as series of steps. Show the model's thinking process. This is useful for debugging.
 * `/conversions_support_data` - Collects structured diagnostic data for gTech conversion troubleshooting and saves a report to `saved/data/`.
 
-To see the full list, from within the Assistant, `ls -l .gemini/commands`. This
-will provide a list of the .toml files that define the commands. For example, `explain.toml`
-can be executed as `/explain <your request>`.
-
-Or, you can execute  `run list_commands.py` from within the Assistant to see the full list with descriptions.
+To see the full list, from within the Assistant, `list commands`. 
 
 ## Directory Structure
 
@@ -190,12 +186,9 @@ The Assistant is designed to generate code for mutate operations (e.g., creating
 
 ## Known Quirks
 
-*   The underlying model may have been trained on an older API version. It
-may occasionally generate code with deprecated fields. Execution errors
-often provide feedback that allows Gemini CLI to self-correct on the next
-attempt, using the context from the client libraries. To avoid these errors, we always search for the latest version of the API when initializing the session and ask you to verify the version.
+*   The underlying model may have been trained on an older API version. It may occasionally generate code with deprecated fields. Execution errors often provide feedback that allows Gemini to self-correct on the next attempt, using the context from the client libraries. To avoid these errors, we always search for the latest version of the API when initializing the session and ask you to verify the version.
 
-*   The exit hook may execute `cleanup_config.py` twice to remove the temporary configuration files. This is a known problem that does not affect performance.
+*   The exit hook may execute `cleanup_environment.py` twice to remove the temporary configuration files. This is a known problem that does not affect performance.
 
 ## Maintenance
 
@@ -203,6 +196,8 @@ We will periodically release updates to both this extension and the client libra
 To ensure you are using the latest versions, run `update.sh` (Linux/macOS)
 or `update.ps1` (Windows) when a new version of the API is published or a new
 version of a client library is released.
+
+Starting with release 2.3.0, you can use the `--context_dir` argument (Linux/macOS) or `-ContextDir` parameter (Windows) with the update scripts to add additional directories to your context (e.g., your own codebase).
 
 ## Uninstallation
 

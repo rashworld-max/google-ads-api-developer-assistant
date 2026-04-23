@@ -1,7 +1,7 @@
 # Google Ads API Developer Assistant Configuration
 
 ## Metadata
-- **Version:** 2.2.0
+- **Version:** 2.3.0
 - **Optimized for:** Machine Comprehension
 - **Runtime:** Python 3.x
 
@@ -26,9 +26,10 @@
 - **NO MUTATE CLIENT LIBS:** Strictly prohibited from modifying ANY files within the `client_libs/` directory. You may analyze, search, and read these files to understand the library's behavior, but you MUST NOT apply changes to them. If a bug or improvement is identified in the library, you MUST provide a detailed explanation and suggest the literal code changes to the user in chat, rather than modifying the files directly.
 - **SOURCE OF TRUTH:** Never rely solely on high-level documentation summaries or search snippets for API capabilities. Always use `grep_search` and `read_file` to verify the literal `.proto` definitions or Python client library docstrings before concluding an API feature's behavior or requirements. When searching for client library definitions or examples, you MUST prioritize the local `client_libs/` directory (e.g., `client_libs/google-ads-python/`) and NEVER use system-wide paths (e.g., `/usr/local/lib/` or `~/.pyenv/`) to avoid version mismatches and environment-specific discrepancies.
 - **PROTOCOL ADHERENCE:** Strictly prohibited from executing un-linted Python code or un-validated GAQL queries.
+- **NO GAQL 'OR' OPERATOR:** Strictly prohibited from using the `OR` logical operator in ANY GAQL query. It is not supported and will cause an `UNEXPECTED_INPUT` error. Always use `IN` or execute multiple separate queries.
+- **NO 'FROM' IN METADATA QUERIES:** When using `GoogleAdsFieldService.search_google_ads_fields`, the GAQL query MUST NOT contain a `FROM` clause (e.g., do not use `FROM google_ads_field`). It will trigger an `UNEXPECTED_FROM_CLAUSE` error.
 
 #### 1.3. Workflow: API Versioning & Pre-Task Validation
-...
 #### 1.4. Technical Gatekeeping (Protocol Enforcement)
 - **NO BYPASS:** Bypassing the GAQL Validation (3.1) or Python Linting (3.2) protocols is a **System Failure**. 
 - **EXPLICIT LOGGING:** Before calling `run_shell_command` for Python or any API search tool, you MUST explicitly state which protocol step you are currently executing (e.g., "Protocol 3.2: Executing Ruff linting on /tmp/script.py").
@@ -85,7 +86,7 @@ Before presenting or executing ANY GAQL query, you MUST pass this 4-step sequenc
     - `OR` is forbidden. Use `IN` or multiple queries.
     - No `FROM` clause in metadata queries.
     - **Metadata Field Names:** When using `GoogleAdsFieldService.search_google_ads_fields`, field names MUST NOT be prefixed with the resource name (e.g., use `name`, not `google_ads_field.name`). Do NOT use `GoogleAdsService` to query `google_ads_field`. Failure results in `UNRECOGNIZED_FIELD`.
-4.  **Runtime Dry Run:** Execute `python3 api_examples/gaql_validator.py`.
+4.  **Runtime Dry Run:** Execute `./.venv/bin/python3 api_examples/gaql_validator.py`.
     - **Success:** Proceed to implementation.
     - **Failure:** Fix query based on validator output and restart from Step 1.
 
@@ -129,7 +130,7 @@ except GoogleAdsException as ex:
 NEVER guess the structure of an API object.
 - **Discovery:** Execute a one-liner to print `type()`, `dir()`, and `str()`.
 - **NO DUMMY CREDENTIALS:** When writing quick inline scripts for object inspection, NEVER initialize `GoogleAdsClient` using `load_from_dict` with placeholder credentials (e.g., `{'developer_token': '1'}`). This triggers an immediate OAuth `RefreshError`.
-- **Inspection Initialization:** You MUST initialize the client using `GoogleAdsClient.load_from_storage()` and ensure the environment variables are correctly passed to the shell command (e.g., `GOOGLE_ADS_USE_PROTO_PLUS=True python3 -c "..."`), OR directly import the protobuf types without initializing a client.
+- **Inspection Initialization:** You MUST initialize the client using `GoogleAdsClient.load_from_storage()` and ensure the environment variables are correctly passed to the shell command (e.g., `GOOGLE_ADS_USE_PROTO_PLUS=True ./.venv/bin/python3 -c "..."`), OR directly import the protobuf types without initializing a client.
 - **Protobuf:** Verify `.pb` existence before using `message.pb.DESCRIPTOR`.
 - **Nested Types:** Use `Class.meta.pb.DESCRIPTOR` for class-level inspection.
 
@@ -137,6 +138,13 @@ NEVER guess the structure of an API object.
 - **Asset Group URL Filtering:** When asked to filter or restrict URL expansion for specific Asset Groups without using Page Feeds, ALWAYS use the `AssetGroupListingGroupFilter` resource with a `listing_source` of `WEBPAGE`.
 - **Implementation:** Create a subdivision tree containing a `UNIT_INCLUDED` node with a `Webpage` condition using the `url_contains` operator.
 - **Anti-Pattern:** Do not falsely state that "URL contains" rules for Asset Groups are impossible without feeds. Do not exclusively recommend Campaign-level exclusions or separate campaigns when Asset Group-level webpage partitioning is the requested goal.
+
+#### 4.5. Workspace Isolation Compliance
+- **NO BARE PYTHON**: Strictly prohibited from executing bare `python3`, `pytest`, or `pip` binaries.
+- **ISOLATION POINTERS**: Always invoke sequestered project-scoped pointers:
+  - `./.venv/bin/python3`
+  - `./.venv/bin/pip`
+  - `./.venv/bin/pytest`
 
 ---
 
@@ -159,7 +167,7 @@ When generating diagnostic reports:
 
 #### 6.1. Tool Usage Policy
 - **`run_shell_command`:** Explain intent BEFORE execution.
-- **Dependencies:** Proactively fix `ModuleNotFoundError` via `pip install`.
+- **Dependencies:** Proactively fix `ModuleNotFoundError` via `./.venv/bin/pip install`.
 - **Parameter Retrieval:** Use session context first, fallback to `customer_id.txt`. Never ask the user.
 - **One-Liners:** Keep logic flat. No loops or `f-strings` with nested quotes.
 
